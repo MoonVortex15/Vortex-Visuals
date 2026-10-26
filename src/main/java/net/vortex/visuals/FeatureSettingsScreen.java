@@ -32,7 +32,7 @@ public class FeatureSettingsScreen extends Screen {
             ).dimensions(centerX - 100, centerY - 20, 200, 20).build());
         } else if (featureName.equals("Hit Color")) {
             this.addDrawableChild(ButtonWidget.builder(
-                    Text.literal("Switch Color"),
+                    Text.literal("Switch Color Preset"),
                     button -> {
                         if (Modules.hitColorRgb == 0xFF5555) Modules.hitColorRgb = 0x55FF55;
                         else if (Modules.hitColorRgb == 0x55FF55) Modules.hitColorRgb = 0x5555FF;
@@ -51,8 +51,8 @@ public class FeatureSettingsScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.fillGradient(0, 0, this.width, this.height, 0xC0101010, 0xD0050505);
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, this.height / 2 - 60, 0x00FFCC);
+        context.fillGradient(0, 0, this.width, this.height, 0xC00B0B10, 0xD0050508);
+        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, this.height / 2 - 60, 0x7A3EE4);
         super.render(context, mouseX, mouseY, delta);
     }
 
