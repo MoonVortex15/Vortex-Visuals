@@ -2,7 +2,6 @@ package net.vortex.visuals;
 
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 
 public class VortexScreen extends Screen {
@@ -16,119 +15,138 @@ public class VortexScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-        rebuildWidgets();
-    }
-
-    private void rebuildWidgets() {
-        this.clearChildren();
-
-        int centerX = this.width / 2;
-        int centerY = this.height / 2;
-        
-        int tabWidth = 70;
-        int tabHeight = 18;
-        int tabY = centerY - 85;
-
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Visuals"), b -> { currentTab = Tab.VISUALS; rebuildWidgets(); })
-                .dimensions(centerX - 110, tabY, tabWidth, tabHeight).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("HUD"), b -> { currentTab = Tab.HUD; rebuildWidgets(); })
-                .dimensions(centerX - 35, tabY, tabWidth, tabHeight).build());
-        this.addDrawableChild(ButtonWidget.builder(Text.literal("Utilities"), b -> { currentTab = Tab.UTILITIES; rebuildWidgets(); })
-                .dimensions(centerX + 40, tabY, tabWidth, tabHeight).build());
-
-        int startY = centerY - 55;
-
-        if (currentTab == Tab.VISUALS) {
-            addToggle(centerX - 150, startY, "Logo", Modules.logoEnabled, val -> Modules.logoEnabled = val);
-            addToggle(centerX + 5, startY, "FPS Counter", Modules.fpsEnabled, val -> Modules.fpsEnabled = val);
-
-            addToggleWithSettings(centerX - 150, startY + 26, "Hit Color", Modules.hitColor, val -> Modules.hitColor = val);
-            addToggle(centerX + 5, startY + 26, "Jump Circles", Modules.jumpCircles, val -> Modules.jumpCircles = val);
-
-            addToggle(centerX - 150, startY + 52, "Particles", Modules.particles, val -> Modules.particles = val);
-            addToggleWithSettings(centerX + 5, startY + 52, "Time Changer", Modules.timeChanger, val -> Modules.timeChanger = val);
-
-        } else if (currentTab == Tab.HUD) {
-            addToggle(centerX - 150, startY, "Armor Status", Modules.armorStatusEnabled, val -> Modules.armorStatusEnabled = val);
-            addToggle(centerX + 5, startY, "Player Info", Modules.playerInfo, val -> Modules.playerInfo = val);
-
-            addToggle(centerX - 150, startY + 26, "Potions", Modules.potionsEnabled, val -> Modules.potionsEnabled = val);
-            addToggle(centerX + 5, startY + 26, "Cooldowns", Modules.cooldownsEnabled, val -> Modules.cooldownsEnabled = val);
-
-        } else if (currentTab == Tab.UTILITIES) {
-            addToggle(centerX - 150, startY, "Hotkeys HUD", Modules.hotkeysEnabled, val -> Modules.hotkeysEnabled = val);
-            addToggle(centerX + 5, startY, "Auto Fish", Modules.autoFish, val -> Modules.autoFish = val);
-
-            addToggle(centerX - 150, startY + 26, "Brightness", Modules.brightness, val -> Modules.brightness = val);
-        }
-    }
-
-    private void addToggle(int x, int y, String name, boolean state, java.util.function.Consumer<Boolean> action) {
-        this.addDrawableChild(ButtonWidget.builder(
-                Text.literal(name + ": " + (state ? "ON" : "OFF")),
-                button -> {
-                    boolean newState = !state;
-                    action.accept(newState);
-                    button.setMessage(Text.literal(name + ": " + (newState ? "ON" : "OFF")));
-                }
-        ).dimensions(x, y, 145, 20).build());
-    }
-
-    private void addToggleWithSettings(int x, int y, String name, boolean state, java.util.function.Consumer<Boolean> action) {
-        this.addDrawableChild(ButtonWidget.builder(
-                Text.literal(name + " [⚙]"),
-                button -> {
-                    // ЛКМ переключает состояние
-                    boolean newState = !state;
-                    action.accept(newState);
-                }
-        ).dimensions(x, y, 145, 20).build());
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 1) { // ПКМ (правая кнопка мыши)
-            // Проверяем, кликнули ли по кнопке Time Changer или Hit Color для открытия их настроек
-            int centerX = this.width / 2;
-            int centerY = this.height / 2;
-            int startY = centerY - 55;
+        int centerX = this.width / 2;
+        int centerY = this.height / 2;
+        int panelX = centerX - 170;
+        int panelY = centerY - 110;
 
-            if (currentTab == Tab.VISUALS) {
-                // Time Changer находится на второй колонке, третья строка (startY + 52)
-                if (mouseX >= centerX + 5 && mouseX <= centerX + 5 + 145 && mouseY >= startY + 52 && mouseY <= startY + 72) {
-                    this.client.setScreen(new FeatureSettingsScreen(this, "Time Changer"));
-                    return true;
-                }
-                // Hit Color находится на первой колонке, вторая строка (startY + 26)
-                if (mouseX >= centerX - 150 && mouseX <= centerX - 5 && mouseY >= startY + 26 && mouseY <= startY + 46) {
-                    this.client.setScreen(new FeatureSettingsScreen(this, "Hit Color"));
-                    return true;
-                }
-            }
+        // Кнопки вкладок сверху
+        if (mouseY >= panelY + 15 && mouseY <= panelY + 35) {
+            if (mouseX >= panelX + 15 && mouseX <= panelX + 105) { currentTab = Tab.VISUALS; return true; }
+            if (mouseX >= panelX + 115 && mouseX <= panelX + 205) { currentTab = Tab.HUD; return true; }
+            if (mouseX >= panelX + 215 && mouseX <= panelX + 325) { currentTab = Tab.UTILITIES; return true; }
         }
+
+        // Элементы в сетке (два столбца)
+        int startX = panelX + 15;
+        int startY = panelY + 55;
+        int btnWidth = 165;
+        int btnHeight = 28;
+        int gapX = 10;
+        int gapY = 8;
+
+        if (currentTab == Tab.VISUALS) {
+            if (checkToggleClick(mouseX, mouseY, startX, startY, btnWidth, btnHeight, 0, 0)) Modules.logoEnabled = !Modules.logoEnabled;
+            if (checkToggleClick(mouseX, mouseY, startX, startY, btnWidth, btnHeight, 1, 0)) Modules.fpsEnabled = !Modules.fpsEnabled;
+            
+            if (checkToggleClick(mouseX, mouseY, startX, startY, btnWidth, btnHeight, 0, 1)) {
+                if (button == 1) this.client.setScreen(new FeatureSettingsScreen(this, "Hit Color"));
+                else Modules.hitColor = !Modules.hitColor;
+            }
+            if (checkToggleClick(mouseX, mouseY, startX, startY, btnWidth, btnHeight, 1, 1)) Modules.jumpCircles = !Modules.jumpCircles;
+
+            if (checkToggleClick(mouseX, mouseY, startX, startY, btnWidth, btnHeight, 0, 2)) Modules.particles = !Modules.particles;
+            if (checkToggleClick(mouseX, mouseY, startX, startY, btnWidth, btnHeight, 1, 2)) {
+                if (button == 1) this.client.setScreen(new FeatureSettingsScreen(this, "Time Changer"));
+                else Modules.timeChanger = !Modules.timeChanger;
+            }
+        } else if (currentTab == Tab.HUD) {
+            if (checkToggleClick(mouseX, mouseY, startX, startY, btnWidth, btnHeight, 0, 0)) Modules.armorStatusEnabled = !Modules.armorStatusEnabled;
+            if (checkToggleClick(mouseX, mouseY, startX, startY, btnWidth, btnHeight, 1, 0)) Modules.playerInfo = !Modules.playerInfo;
+            if (checkToggleClick(mouseX, mouseY, startX, startY, btnWidth, btnHeight, 0, 1)) Modules.potionsEnabled = !Modules.potionsEnabled;
+            if (checkToggleClick(mouseX, mouseY, startX, startY, btnWidth, btnHeight, 1, 1)) Modules.cooldownsEnabled = !Modules.cooldownsEnabled;
+        } else if (currentTab == Tab.UTILITIES) {
+            if (checkToggleClick(mouseX, mouseY, startX, startY, btnWidth, btnHeight, 0, 0)) Modules.hotkeysEnabled = !Modules.hotkeysEnabled;
+            if (checkToggleClick(mouseX, mouseY, startX, startY, btnWidth, btnHeight, 1, 0)) Modules.autoFish = !Modules.autoFish;
+            if (checkToggleClick(mouseX, mouseY, startX, startY, btnWidth, btnHeight, 0, 1)) Modules.brightness = !Modules.brightness;
+        }
+
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    private boolean checkToggleClick(double mx, double my, int startX, int startY, int w, int h, int col, int row) {
+        int x = startX + col * (w + 10);
+        int y = startY + row * (h + 8);
+        return mx >= x && mx <= x + w && my >= y && my <= y + h;
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.fillGradient(0, 0, this.width, this.height, 0xC0101010, 0xD0050505);
+        context.fillGradient(0, 0, this.width, this.height, 0xDD000000, 0xEE050508);
 
-        int panelWidth = 320;
-        int panelHeight = 200;
+        int panelWidth = 360;
+        int panelHeight = 240;
         int panelX = (this.width - panelWidth) / 2;
         int panelY = (this.height - panelHeight) / 2;
 
-        context.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xEE181820);
-        context.drawBorder(panelX, panelY, panelWidth, panelHeight, 0x44FFFFFF);
+        // Основное окно с закругленным стилем (темный фон + неоновая обводка)
+        context.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xFF121216);
+        context.drawBorder(panelX, panelY, panelWidth, panelHeight, 0xFF2A2A35);
 
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, this.width / 2, panelY + 10, 0x00FFCC);
-        context.drawTextWithShadow(this.textRenderer, "§7ПКМ по кнопке [⚙] — настройки функции", panelX + 15, panelY + panelHeight - 15, 0x888888);
+        // Вкладки
+        drawTabButton(context, "Visuals", panelX + 15, panelY + 15, 90, 20, currentTab == Tab.VISUALS);
+        drawTabButton(context, "HUD", panelX + 115, panelY + 15, 90, 20, currentTab == Tab.HUD);
+        drawTabButton(context, "Utilities", panelX + 215, panelY + 15, 110, 20, currentTab == Tab.UTILITIES);
 
-        super.render(context, mouseX, mouseY, delta);
+        int startX = panelX + 15;
+        int startY = panelY + 55;
+        int btnWidth = 165;
+        int btnHeight = 28;
+
+        if (currentTab == Tab.VISUALS) {
+            drawFeatureButton(context, "Logo", Modules.logoEnabled, false, startX, startY, 0, 0, btnWidth, btnHeight);
+            drawFeatureButton(context, "FPS Counter", Modules.fpsEnabled, false, startX, startY, 1, 0, btnWidth, btnHeight);
+            drawFeatureButton(context, "Hit Color", Modules.hitColor, true, startX, startY, 0, 1, btnWidth, btnHeight);
+            drawFeatureButton(context, "Jump Circles", Modules.jumpCircles, false, startX, startY, 1, 1, btnWidth, btnHeight);
+            drawFeatureButton(context, "Particles", Modules.particles, false, startX, startY, 0, 2, btnWidth, btnHeight);
+            drawFeatureButton(context, "Time Changer", Modules.timeChanger, true, startX, startY, 1, 2, btnWidth, btnHeight);
+        } else if (currentTab == Tab.HUD) {
+            drawFeatureButton(context, "Armor Status", Modules.armorStatusEnabled, false, startX, startY, 0, 0, btnWidth, btnHeight);
+            drawFeatureButton(context, "Player Info", Modules.playerInfo, false, startX, startY, 1, 0, btnWidth, btnHeight);
+            drawFeatureButton(context, "Potions", Modules.potionsEnabled, false, startX, startY, 0, 1, btnWidth, btnHeight);
+            drawFeatureButton(context, "Cooldowns", Modules.cooldownsEnabled, false, startX, startY, 1, 1, btnWidth, btnHeight);
+        } else if (currentTab == Tab.UTILITIES) {
+            drawFeatureButton(context, "Hotkeys HUD", Modules.hotkeysEnabled, false, startX, startY, 0, 0, btnWidth, btnHeight);
+            drawFeatureButton(context, "Auto Fish", Modules.autoFish, false, startX, startY, 1, 0, btnWidth, btnHeight);
+            drawFeatureButton(context, "Brightness", Modules.brightness, false, startX, startY, 0, 1, btnWidth, btnHeight);
+        }
+
+        context.drawTextWithShadow(this.textRenderer, "§8ПКМ по кнопке с [⚙] — настройки", panelX + 15, panelY + panelHeight - 20, 0x888888);
+    }
+
+    private void drawTabButton(DrawContext context, String name, int x, int y, int w, int h, boolean active) {
+        int bgColor = active ? 0xFF22222D : 0xFF18181C;
+        int textColor = active ? 0x00FFCC : 0xAAAAAA;
+        context.fill(x, y, x + w, y + h, bgColor);
+        context.drawBorder(x, y, w, h, active ? 0xFF00FFCC : 0xFF2A2A35);
+        context.drawCenteredTextWithShadow(this.textRenderer, name, x + w / 2, y + 6, textColor);
+    }
+
+    private void drawFeatureButton(DrawContext context, String name, boolean state, boolean hasSettings, int startX, int startY, int col, int row, int w, int h) {
+        int x = startX + col * (w + 10);
+        int y = startY + row * (h + 8);
+
+        context.fill(x, y, x + w, y + h, 0xFF1A1A22);
+        context.drawBorder(x, y, w, h, state ? 0xFF334455 : 0xFF252530);
+
+        String displayName = name + (hasSettings ? " [§b⚙§r]" : "");
+        context.drawTextWithShadow(this.textRenderer, displayName, x + 10, y + 10, 0xFFFFFF);
+
+        // Кастомный стильный переключатель (тумблер)
+        int toggleW = 28;
+        int toggleH = 14;
+        int toggleX = x + w - toggleW - 10;
+        int toggleY = y + (h - toggleH) / 2;
+
+        context.fill(toggleX, toggleY, toggleX + toggleW, toggleY + toggleH, state ? 0xFF00AA77 : 0xFF333340);
+        int knobX = state ? (toggleX + toggleW - 12) : (toggleX + 2);
+        context.fill(knobX, toggleY + 2, knobX + 10, toggleY + 12, 0xFFFFFFFF);
     }
 
     @Override
-    public boolean shouldPause() {
-        return false;
-    }
+    public boolean shouldPause() { return false; }
 }
