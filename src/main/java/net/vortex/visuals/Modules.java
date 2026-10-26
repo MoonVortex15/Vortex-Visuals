@@ -5,11 +5,11 @@ public class Modules {
     public static boolean logoEnabled = true;
     public static boolean fpsEnabled = true;
     public static boolean hitColor = true;
-    public static int hitColorRgb = 0xFF5555; // Настройка для Hit Color (цвет)
+    public static int hitColorRgb = 0xFF5555;
     public static boolean jumpCircles = true;
     public static boolean particles = true;
     public static boolean timeChanger = false;
-    public static String timeMode = "Day"; // Настройка для Time Changer (Day / Night / Noon)
+    public static String timeMode = "Day";
 
     // HUD tab
     public static boolean armorStatusEnabled = true;
@@ -21,4 +21,14 @@ public class Modules {
     public static boolean hotkeysEnabled = true;
     public static boolean autoFish = false;
     public static boolean brightness = true;
+
+    // Координаты для перетаскивания элементов HUD (сохраняются при перемещении в чате)
+    public static int logoX = 15;
+    public static int logoY = 15;
+    
+    public static int playerInfoX = 15;
+    public static int playerInfoY = 120;
+    
+    public static int hotkeysX = -120; // Относительно правого края, если отрицательное
+    public static int hotkeysY = 120;
 }
