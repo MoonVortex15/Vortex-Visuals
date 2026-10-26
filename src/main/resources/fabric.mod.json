@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "vortex-visuals",
+  "version": "${version}",
+  "name": "Vortex Visuals",
+  "description": "Custom HUD mod for Fabric 1.21.4",
+  "authors": [
+    "MoonVortex15"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/vortex-visuals/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "net.vortex.visuals.VortexClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.4",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
