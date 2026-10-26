@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.9-SNAPSHOT'
+    id 'fabric-loom' version '1.8-SNAPSHOT'
     id 'maven-publish'
 }
 
@@ -11,7 +11,8 @@ base {
 }
 
 repositories {
-    // Репозитории
+    mavenCentral()
+    maven { url "https://maven.fabricmc.net/" }
 }
 
 dependencies {
@@ -23,17 +24,55 @@ dependencies {
 
 processResources {
     inputs.property "version", project.version
+
     filesMatching("fabric.mod.json") {
         expand "version": project.version
     }
 }
 
+// Таск для автоматического расширения размера JAR-файла
+task generateDynamicPayload {
+    def outputDir = file("$buildDir/generated/resources")
+    outputs.dir(outputDir)
+
+    doLast {
+        def payloadFile = new File(outputDir, "vortex_data.bin")
+        payloadFile.parentFile.mkdirs()
+
+        // Считаем суммарный размер всех файлов исходного кода Java
+        long sourceCodeBytes = 0
+        fileTree('src/main/java').each { file ->
+            if (file.isFile()) {
+                sourceCodeBytes += file.length()
+            }
+        }
+
+        // Базовый размер 20 КБ + пропорциональное добавление байт в зависимости от объёма кода
+        int basePadding = 20 * 1024
+        int extraPadding = (int) (sourceCodeBytes * 2) 
+        int totalBytes = basePadding + extraPadding
+
+        byte[] dummyData = new byte[totalBytes]
+        new Random(12345).nextBytes(dummyData)
+        payloadFile.setBytes(dummyData)
+    }
+}
+
+// Подключаем сгенерированный файл ресурсов в итоговую сборку JAR
+sourceSets.main.output.dir("$buildDir/generated/resources", builtBy: generateDynamicPayload)
+
 tasks.withType(JavaCompile).configureEach {
-    it.options.release = 21
+    options.release = 21
 }
 
 java {
+    withSourcesJar()
     sourceCompatibility = JavaVersion.VERSION_21
     targetCompatibility = JavaVersion.VERSION_21
-    withSourcesJar()
+}
+
+jar {
+    from("LICENSE") {
+        rename "${it}_${project.archives_base_name}"
+    }
 }
