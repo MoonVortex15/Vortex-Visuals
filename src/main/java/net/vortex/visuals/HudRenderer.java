@@ -15,48 +15,68 @@ public class HudRenderer {
         int width = client.getWindow().getScaledWidth();
         int height = client.getWindow().getScaledHeight();
 
-        // 1. Логотип
-        if (Modules.logoEnabled) {
-            context.drawTextWithShadow(client.textRenderer, "Vortex Visuals", 10, 10, 0x00FFCC);
+        // 1. Панель Логотипа и FPS (сверху слева в красивом стиле)
+        if (Modules.logoEnabled || Modules.fpsEnabled) {
+            int panelW = 120;
+            int panelH = Modules.logoEnabled && Modules.fpsEnabled ? 38 : 22;
+            drawFloatingPanel(context, 12, 12, panelW, panelH);
+
+            int textY = 18;
+            if (Modules.logoEnabled) {
+                context.drawTextWithShadow(client.textRenderer, "§bVortex Visuals", 20, textY, 0xFFFFFF);
+                textY += 14;
+            }
+            if (Modules.fpsEnabled) {
+                context.drawTextWithShadow(client.textRenderer, "FPS: " + client.getCurrentFps(), 20, textY, 0x55FF55);
+            }
         }
 
-        // 2. FPS
-        if (Modules.fpsEnabled) {
-            int fps = client.getCurrentFps();
-            context.drawTextWithShadow(client.textRenderer, "FPS: " + fps, 10, 22, 0xFFFFFF);
+        // 2. Блок информации об игроке (слева по центру)
+        if (Modules.playerInfo) {
+            int px = 12;
+            int py = height / 2 - 30;
+            drawFloatingPanel(context, px, py, 110, 42);
+            context.drawTextWithShadow(client.textRenderer, client.player.getName().getString(), px + 10, py + 7, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "HP: " + (int)client.player.getHealth(), px + 10, py + 22, 0xFF5555);
         }
 
-        // 3. Умный Армор-Худ вокруг хотбара (как ты просил!)
+        // 3. Панель Хоткеев (справа по центру)
+        if (Modules.hotkeysEnabled) {
+            int hx = width - 115;
+            int hy = height / 2 - 40;
+            drawFloatingPanel(context, hx, hy, 105, 60);
+            context.drawTextWithShadow(client.textRenderer, "§bHotkeys", hx + 10, hy + 6, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "Menu: RShift", hx + 10, hy + 22, 0xAAAAAA);
+            context.drawTextWithShadow(client.textRenderer, "Brightness: H", hx + 10, hy + 36, 0xAAAAAA);
+        }
+
+        // 4. Аккуратный Армор-Худ вокруг хотбара
         if (Modules.armorStatusEnabled) {
             int hotbarLeft = width / 2 - 91;
             int hotbarRight = width / 2 + 91;
-            int hudY = height - 19;
+            int hudY = height - 20;
 
-            // Слева от хотбара: Ботинки и Поножи
-            renderArmorItem(context, client, client.player.getEquippedStack(EquipmentSlot.FEET), hotbarLeft - 50, hudY);
-            renderArmorItem(context, client, client.player.getEquippedStack(EquipmentSlot.LEGS), hotbarLeft - 25, hudY);
-
-            // Справа от хотбара: Нагрудник и Шлем
-            renderArmorItem(context, client, client.player.getEquippedStack(EquipmentSlot.CHEST), hotbarRight + 5, hudY);
-            renderArmorItem(context, client, client.player.getEquippedStack(EquipmentSlot.HEAD), hotbarRight + 30, hudY);
+            renderArmorItem(context, client, client.player.getEquippedStack(EquipmentSlot.FEET), hotbarLeft - 48, hudY);
+            renderArmorItem(context, client, client.player.getEquippedStack(EquipmentSlot.LEGS), hotbarLeft - 24, hudY);
+            renderArmorItem(context, client, client.player.getEquippedStack(EquipmentSlot.CHEST), hotbarRight + 8, hudY);
+            renderArmorItem(context, client, client.player.getEquippedStack(EquipmentSlot.HEAD), hotbarRight + 32, hudY);
         }
+    }
+
+    private static void drawFloatingPanel(DrawContext context, int x, int y, int w, int h) {
+        context.fill(x, y, x + w, y + h, 0xCC121216);
+        context.drawBorder(x, y, w, h, 0xFF2A2A35);
     }
 
     private static void renderArmorItem(DrawContext context, MinecraftClient client, ItemStack stack, int x, int y) {
         if (stack.isEmpty()) return;
-
         context.drawItem(stack, x, y);
-
         if (stack.isDamageable()) {
-            int maxDurability = stack.getMaxDamage();
-            int currentDurability = maxDurability - stack.getDamage();
-            int percent = (int) (((float) currentDurability / maxDurability) * 100);
-
-            int color = 0x55FF55; // Зеленый
-            if (percent < 50) color = 0xFFFF55; // Желтый
-            if (percent < 20) color = 0xFF5555; // Красный
-
-            context.drawTextWithShadow(client.textRenderer, percent + "%", x + 17, y + 4, color);
+            int max = stack.getMaxDamage();
+            int current = max - stack.getDamage();
+            int percent = (int) (((float) current / max) * 100);
+            int color = percent < 20 ? 0xFF5555 : (percent < 50 ? 0xFFFF55 : 0x55FF55);
+            context.drawTextWithShadow(client.textRenderer, percent + "%", x + 16, y + 4, color);
         }
     }
 }
