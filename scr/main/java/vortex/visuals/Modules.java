@@ -6,10 +6,11 @@ import java.util.List;
 public final class Modules {
     public static final List<Module> ALL = new ArrayList<>();
 
-    public static final Module CLIENT_NAME = new Module("Название клиента", "Показывает название и версию клиента", true);
-    public static final Module POTIONS_MOD = new Module("Эффекты зелий", "Показывает активные эффекты зелий", true);
-    public static final Module TARGET_INFO = new Module("Информация о цели", "Показывает здоровье и экипировку цели", true);
-    public static final Module KEY_BINDS = new Module("Список клавиш", "Показывает назначенные клавиши функций", true);
+    public static final Module CLIENT_NAME = new Module("Логотип", "Отображает название клиента на экране", true);
+    public static final Module FPS_COUNTER = new Module("Счетчик FPS", "Показывает текущую частоту кадров", true);
+    public static final Module CPS_COUNTER = new Module("Счетчик CPS", "Показывает скорость кликов мыши", true);
+    public static final Module ARMOR_STATUS = new Module("Статус брони", "Отображает прочность брони по бокам инвентаря", true);
+    public static final Module KEY_BINDS = new Module("Хоткеи", "Показывает быстрые клавиши управления", true);
 
     public static class Module {
         public final String name;
