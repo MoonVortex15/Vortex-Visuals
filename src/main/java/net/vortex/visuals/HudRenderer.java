@@ -24,21 +24,17 @@ public class HudRenderer {
 
         double mouseX = client.mouse.getX() * (double) client.getWindow().getScaledWidth() / (double) client.getWindow().getWidth();
         double mouseY = client.mouse.getY() * (double) client.getWindow().getScaledHeight() / (double) client.getWindow().getHeight();
-
         boolean isMousePressed = GLFW.glfwGetMouseButton(client.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
 
         if (inChat) {
-            if (!isMousePressed) {
-                draggingElement = null;
-            }
-
+            if (!isMousePressed) draggingElement = null;
             if (draggingElement != null) {
-                if (draggingElement.equals("logo")) {
-                    Modules.logoX = (int) mouseX - dragOffsetX;
-                    Modules.logoY = (int) mouseY - dragOffsetY;
-                } else if (draggingElement.equals("playerInfo")) {
+                if (draggingElement.equals("playerInfo")) {
                     Modules.playerInfoX = (int) mouseX - dragOffsetX;
                     Modules.playerInfoY = (int) mouseY - dragOffsetY;
+                } else if (draggingElement.equals("potions")) {
+                    Modules.potionsX = (int) mouseX - dragOffsetX;
+                    Modules.potionsY = (int) mouseY - dragOffsetY;
                 } else if (draggingElement.equals("hotkeys")) {
                     Modules.hotkeysX = (int) mouseX - dragOffsetX;
                     Modules.hotkeysY = (int) mouseY - dragOffsetY;
@@ -47,42 +43,48 @@ public class HudRenderer {
         } else {
             draggingElement = null;
         }
-
         wasMousePressed = isMousePressed;
 
-        // 1. Логотип и FPS (Перетаскиваемый)
-        if (Modules.logoEnabled || Modules.fpsEnabled) {
-            int w = 130, h = Modules.logoEnabled && Modules.fpsEnabled ? 40 : 24;
-            drawModernPanel(context, Modules.logoX, Modules.logoY, w, h, "logo", inChat, mouseX, mouseY);
-
-            int ty = Modules.logoY + 6;
-            if (Modules.logoEnabled) {
-                context.drawTextWithShadow(client.textRenderer, "§bVortex Visuals", Modules.logoX + 10, ty, 0xFFFFFF);
-                ty += 14;
-            }
-            if (Modules.fpsEnabled) {
-                context.drawTextWithShadow(client.textRenderer, "FPS: " + client.getCurrentFps(), Modules.logoX + 10, ty, 0x55FF55);
-            }
-        }
-
-        // 2. Блок игрока (Перетаскиваемый)
+        // 1. Панель игрока (как на скриншоте: аватарка, ник, HP и фиолетовая полоска)
         if (Modules.playerInfo) {
-            int w = 120, h = 45;
-            drawModernPanel(context, Modules.playerInfoX, Modules.playerInfoY, w, h, "playerInfo", inChat, mouseX, mouseY);
-            context.drawTextWithShadow(client.textRenderer, client.player.getName().getString(), Modules.playerInfoX + 10, Modules.playerInfoY + 8, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "HP: " + (int)client.player.getHealth(), Modules.playerInfoX + 10, Modules.playerInfoY + 24, 0xFF5555);
+            int px = Modules.playerInfoX;
+            int py = Modules.playerInfoY;
+            int w = 135, h = 50;
+            drawHudCard(context, px, py, w, h, "playerInfo", inChat, mouseX, mouseY);
+
+            context.drawTextWithShadow(client.textRenderer, client.player.getName().getString(), px + 12, py + 8, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "HP / " + (int)client.player.getHealth(), px + 12, py + 22, 0x888599);
+            
+            // Фиолетовая полоска здоровья
+            context.fill(px + 12, py + 36, px + 12 + 110, py + 40, 0xFF1E1B2C);
+            context.fill(px + 12, py + 36, px + 12 + (int)(110 * (client.player.getHealth() / 20.0f)), py + 40, 0xFF7A3EE4);
         }
 
-        // 3. Хоткеи (Перетаскиваемые)
+        // 2. Панель Зелий (Potions) как на референсе
+        if (Modules.potionsEnabled) {
+            int px = Modules.potionsX;
+            int py = Modules.potionsY;
+            int w = 135, h = 60;
+            drawHudCard(context, px, py, w, h, "potions", inChat, mouseX, mouseY);
+            context.drawTextWithShadow(client.textRenderer, "§bPotions", px + 10, py + 8, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "Strength II          ∞", px + 10, py + 24, 0xAAAAAA);
+            context.drawTextWithShadow(client.textRenderer, "Speed II           3:12", px + 10, py + 40, 0xAAAAAA);
+        }
+
+        // 3. Панель Хоткеев (Hot Keys) справа
         if (Modules.hotkeysEnabled) {
-            int w = 110, h = 65;
-            drawModernPanel(context, Modules.hotkeysX, Modules.hotkeysY, w, h, "hotkeys", inChat, mouseX, mouseY);
-            context.drawTextWithShadow(client.textRenderer, "§bHotkeys", Modules.hotkeysX + 10, Modules.hotkeysY + 8, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "Menu: RShift", Modules.hotkeysX + 10, Modules.hotkeysY + 24, 0xAAAAAA);
-            context.drawTextWithShadow(client.textRenderer, "Brightness: H", Modules.hotkeysX + 10, Modules.hotkeysY + 38, 0xAAAAAA);
+            int hx = Modules.hotkeysX < 0 ? width + Modules.hotkeysX : Modules.hotkeysX;
+            int hy = Modules.hotkeysY;
+            int w = 140, h = 85;
+            drawHudCard(context, hx, hy, w, h, "hotkeys", inChat, mouseX, mouseY);
+            context.drawTextWithShadow(client.textRenderer, "⌨ Hot Keys", hx + 10, hy + 8, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "AutoFish          V", hx + 10, hy + 26, 0xAAAAAA);
+            context.drawTextWithShadow(client.textRenderer, "Brightness       H", hx + 10, hy + 42, 0xAAAAAA);
+            context.drawTextWithShadow(client.textRenderer, "HUD                 M", hx + 10, hy + 58, 0xAAAAAA);
+            context.drawTextWithShadow(client.textRenderer, "Music Bar        Q", hx + 10, hy + 74, 0xAAAAAA);
         }
 
-        // 4. Армор-худ (намертво зафиксирован вокруг хотбара)
+        // 4. Аккуратный Армор-Худ вокруг хотбара снизу
         if (Modules.armorStatusEnabled) {
             int hotbarLeft = width / 2 - 91;
             int hotbarRight = width / 2 + 91;
@@ -95,14 +97,13 @@ public class HudRenderer {
         }
     }
 
-    private static void drawModernPanel(DrawContext context, int x, int y, int w, int h, String id, boolean inChat, double mouseX, double mouseY) {
-        context.fill(x, y, x + w, y + h, 0xDD121216);
-        context.drawBorder(x, y, w, h, inChat ? 0xFF00FFCC : 0xFF2A2A35);
+    private static void drawHudCard(DrawContext context, int x, int y, int w, int h, String id, boolean inChat, double mouseX, double mouseY) {
+        context.fill(x, y, x + w, y + h, 0xEE0B0B10);
+        context.drawBorder(x, y, w, h, inChat ? 0xFF7A3EE4 : 0xFF1C1A29);
 
         if (inChat && !wasMousePressed) {
             MinecraftClient client = MinecraftClient.getInstance();
             boolean isPressed = GLFW.glfwGetMouseButton(client.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
-            
             if (isPressed && mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
                 draggingElement = id;
                 dragOffsetX = (int) mouseX - x;
