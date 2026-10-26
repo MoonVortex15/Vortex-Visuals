@@ -6,34 +6,33 @@ import net.minecraft.client.gui.DrawContext;
 public final class HudRenderer {
     public static void render(DrawContext ctx) {
         MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc.player == null || mc.world == null || mc.options.hudHidden) return;
+        if (mc.options.hudHidden) return;
 
         int sw = ctx.getScaledWindowWidth();
 
-        // 1. Название клиента (если включено)
+        // 1. Плашка клиента
         if (Modules.CLIENT_NAME.enabled) {
-            String title = "Vortex Visuals v1.0";
-            int w = mc.textRenderer.getWidth(title) + 40;
-            int h = 24;
+            String title = "Vortex Visuals";
+            int w = 130;
+            int h = 20;
             int x = (sw - w) / 2;
-            int y = 10;
+            int y = 8;
 
-            Ui.card(ctx, x, y, w, h, 8);
-            Ui.roundRect(ctx, x + 8, y + 7, 10, 10, 3, Ui.ACCENT);
-            Ui.text(ctx, mc, title, x + 24, y + 8, Ui.TEXT);
+            Ui.card(ctx, x, y, w, h);
+            Ui.fill(ctx, x + 6, y + 6, 8, 8, Ui.ACCENT);
+            Ui.text(ctx, mc, title, x + 20, y + 6, Ui.TEXT);
         }
 
-        // 2. Список клавиш / Хоткеи (если включено)
+        // 2. Блок FPS
         if (Modules.KEY_BINDS.enabled) {
-            int x = sw - 130;
-            int y = 40;
-            int w = 120;
-            int h = 70;
+            int x = sw - 110;
+            int y = 10;
+            int w = 100;
+            int h = 30;
 
-            Ui.card(ctx, x, y, w, h, 8);
-            Ui.text(ctx, mc, "Hot Keys", x + 10, y + 8, Ui.TEXT);
-            Ui.text(ctx, mc, "HUD: Right Shift", x + 10, y + 28, Ui.SUB);
-            Ui.text(ctx, mc, "Client: Active", x + 10, y + 44, Ui.SUB);
+            Ui.card(ctx, x, y, w, h);
+            Ui.text(ctx, mc, "Vortex HUD", x + 8, y + 6, Ui.TEXT);
+            Ui.text(ctx, mc, "FPS: " + MinecraftClient.getCurrentFps(), x + 8, y + 18, Ui.SUB);
         }
     }
 
