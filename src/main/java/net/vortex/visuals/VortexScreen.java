@@ -66,19 +66,19 @@ public class VortexScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Затемнение экрана заднего плана
-        context.fillGradient(0, 0, this.width, this.height, 0xEE050508, 0xFFA000000);
+        // Заменено на правильный 8-значный hex цвет
+        context.fillGradient(0, 0, this.width, this.height, 0xEE050508, 0xFF000000);
 
         int panelW = 460;
         int panelH = 300;
         int panelX = (this.width - panelW) / 2;
         int panelY = (this.height - panelH) / 2;
 
-        // Основное окно с глубоким темно-фиолетовым стилем и скруглениями (имитация)
+        // Основное окно с глубоким темно-фиолетовым стилем
         context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xFF0B0B10);
         context.drawBorder(panelX, panelY, panelW, panelH, 0xFF1C1A29);
 
-        // Вкладки сверху как на референсе
+        // Вкладки сверху
         drawTab(context, "Visuals", panelX + 25, panelY + 20, 65, 20, currentTab == Tab.VISUALS);
         drawTab(context, "HUD", panelX + 100, panelY + 20, 45, 20, currentTab == Tab.HUD);
         drawTab(context, "Utilities", panelX + 155, panelY + 20, 65, 20, currentTab == Tab.UTILITIES);
@@ -123,14 +123,13 @@ public class VortexScreen extends Screen {
         int x = startX + col * (w + 12);
         int y = startY + row * (h + 10);
 
-        // Карточка функции (темная капсула)
         context.fill(x, y, x + w, y + h, state ? 0xFF161422 : 0xFF111017);
         context.drawBorder(x, y, w, h, state ? 0xFF362E52 : 0xFF191722);
 
         String title = name + (hasSettings ? " §b[⚙]" : "");
         context.drawTextWithShadow(this.textRenderer, title, x + 14, y + 11, state ? 0xFFEEEEFF : 0x9995A6);
 
-        // Фиолетовый тумблер как на скриншоте
+        // Фиолетовый тумблер
         int tw = 32, th = 16;
         int tx = x + w - tw - 12;
         int ty = y + (h - th) / 2;
