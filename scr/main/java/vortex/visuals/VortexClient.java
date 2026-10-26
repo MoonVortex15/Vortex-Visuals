@@ -13,20 +13,17 @@ public class VortexClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // Регистрация клавиши Right Shift через Fabric KeyBinding API
         guiKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "Open Menu",
+                "Vortex Menu",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_RIGHT_SHIFT,
                 "Vortex Visuals"
         ));
 
-        // Отрисовка HUD
         HudRenderCallback.EVENT.register((drawContext, renderTickCounter) -> {
             HudRenderer.render(drawContext);
         });
 
-        // Открытие GUI по нажатию
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (guiKeyBinding.wasPressed()) {
                 if (client.currentScreen == null) {
