@@ -2,11 +2,15 @@ package net.vortex.visuals;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 
 public class HudRenderer {
+    private static String draggingElement = null;
+    private static int dragOffsetX = 0;
+    private static int dragOffsetY = 0;
 
     public static void render(DrawContext context, RenderTickCounter tickCounter) {
         MinecraftClient client = MinecraftClient.getInstance();
@@ -14,43 +18,64 @@ public class HudRenderer {
 
         int width = client.getWindow().getScaledWidth();
         int height = client.getWindow().getScaledHeight();
+        boolean inChat = client.currentScreen instanceof ChatScreen;
 
-        // 1. Панель Логотипа и FPS (сверху слева в красивом стиле)
+        // Обработка перетаскивания мышкой в чате
+        if (inChat) {
+            double mouseX = client.mouse.getX() * (double) client.getWindow().getScaledWidth() / (double) client.getWindow().getWidth();
+            double mouseY = client.mouse.getY() * (double) client.getWindow().getScaledHeight() / (double) client.getWindow().getHeight();
+
+            if (client.mouse.wasButtonReleased(0)) {
+                draggingElement = null;
+            }
+
+            if (draggingElement != null) {
+                if (draggingElement.equals("logo")) {
+                    Modules.logoX = (int) mouseX - dragOffsetX;
+                    Modules.logoY = (int) mouseY - dragOffsetY;
+                } else if (draggingElement.equals("playerInfo")) {
+                    Modules.playerInfoX = (int) mouseX - dragOffsetX;
+                    Modules.playerInfoY = (int) mouseY - dragOffsetY;
+                } else if (draggingElement.equals("hotkeys")) {
+                    Modules.hotkeysX = (int) mouseX - dragOffsetX;
+                    Modules.hotkeysY = (int) mouseY - dragOffsetY;
+                }
+            }
+        }
+
+        // 1. Логотип и FPS (Перетаскиваемый)
         if (Modules.logoEnabled || Modules.fpsEnabled) {
-            int panelW = 120;
-            int panelH = Modules.logoEnabled && Modules.fpsEnabled ? 38 : 22;
-            drawFloatingPanel(context, 12, 12, panelW, panelH);
+            int w = 130, h = Modules.logoEnabled && Modules.fpsEnabled ? 40 : 24;
+            drawModernPanel(context, Modules.logoX, Modules.logoY, w, h, "logo", inChat);
 
-            int textY = 18;
+            int ty = Modules.logoY + 6;
             if (Modules.logoEnabled) {
-                context.drawTextWithShadow(client.textRenderer, "§bVortex Visuals", 20, textY, 0xFFFFFF);
-                textY += 14;
+                context.drawTextWithShadow(client.textRenderer, "§bVortex Visuals", Modules.logoX + 10, ty, 0xFFFFFF);
+                ty += 14;
             }
             if (Modules.fpsEnabled) {
-                context.drawTextWithShadow(client.textRenderer, "FPS: " + client.getCurrentFps(), 20, textY, 0x55FF55);
+                context.drawTextWithShadow(client.textRenderer, "FPS: " + client.getCurrentFps(), Modules.logoX + 10, ty, 0x55FF55);
             }
         }
 
-        // 2. Блок информации об игроке (слева по центру)
+        // 2. Блок игрока (Перетаскиваемый)
         if (Modules.playerInfo) {
-            int px = 12;
-            int py = height / 2 - 30;
-            drawFloatingPanel(context, px, py, 110, 42);
-            context.drawTextWithShadow(client.textRenderer, client.player.getName().getString(), px + 10, py + 7, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "HP: " + (int)client.player.getHealth(), px + 10, py + 22, 0xFF5555);
+            int w = 120, h = 45;
+            drawModernPanel(context, Modules.playerInfoX, Modules.playerInfoY, w, h, "playerInfo", inChat);
+            context.drawTextWithShadow(client.textRenderer, client.player.getName().getString(), Modules.playerInfoX + 10, Modules.playerInfoY + 8, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "HP: " + (int)client.player.getHealth(), Modules.playerInfoX + 10, Modules.playerInfoY + 24, 0xFF5555);
         }
 
-        // 3. Панель Хоткеев (справа по центру)
+        // 3. Хоткеи (Перетаскиваемые)
         if (Modules.hotkeysEnabled) {
-            int hx = width - 115;
-            int hy = height / 2 - 40;
-            drawFloatingPanel(context, hx, hy, 105, 60);
-            context.drawTextWithShadow(client.textRenderer, "§bHotkeys", hx + 10, hy + 6, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "Menu: RShift", hx + 10, hy + 22, 0xAAAAAA);
-            context.drawTextWithShadow(client.textRenderer, "Brightness: H", hx + 10, hy + 36, 0xAAAAAA);
+            int w = 110, h = 65;
+            drawModernPanel(context, Modules.hotkeysX, Modules.hotkeysY, w, h, "hotkeys", inChat);
+            context.drawTextWithShadow(client.textRenderer, "§bHotkeys", Modules.hotkeysX + 10, Modules.hotkeysY + 8, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "Menu: RShift", Modules.hotkeysX + 10, Modules.hotkeysY + 24, 0xAAAAAA);
+            context.drawTextWithShadow(client.textRenderer, "Brightness: H", Modules.hotkeysX + 10, Modules.hotkeysY + 38, 0xAAAAAA);
         }
 
-        // 4. Аккуратный Армор-Худ вокруг хотбара
+        // 4. Армор-худ (намертво зафиксирован вокруг хотбара, как ты и просил)
         if (Modules.armorStatusEnabled) {
             int hotbarLeft = width / 2 - 91;
             int hotbarRight = width / 2 + 91;
@@ -63,9 +88,21 @@ public class HudRenderer {
         }
     }
 
-    private static void drawFloatingPanel(DrawContext context, int x, int y, int w, int h) {
-        context.fill(x, y, x + w, y + h, 0xCC121216);
-        context.drawBorder(x, y, w, h, 0xFF2A2A35);
+    private static void drawModernPanel(DrawContext context, int x, int y, int w, int h, String id, boolean inChat) {
+        context.fill(x, y, x + w, y + h, 0xDD121216);
+        context.drawBorder(x, y, w, h, inChat ? 0xFF00FFCC : 0xFF2A2A35); // В чате подсвечиваются рамки для перемещения
+
+        if (inChat) {
+            MinecraftClient client = MinecraftClient.getInstance();
+            double mouseX = client.mouse.getX() * (double) client.getWindow().getScaledWidth() / (double) client.getWindow().getWidth();
+            double mouseY = client.mouse.getY() * (double) client.getWindow().getScaledHeight() / (double) client.getWindow().getHeight();
+
+            if (client.mouse.wasButtonPressed(0) && mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
+                draggingElement = id;
+                dragOffsetX = (int) mouseX - x;
+                dragOffsetY = (int) mouseY - y;
+            }
+        }
     }
 
     private static void renderArmorItem(DrawContext context, MinecraftClient client, ItemStack stack, int x, int y) {
