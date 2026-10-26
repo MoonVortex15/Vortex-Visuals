@@ -1,34 +1,28 @@
 package net.vortex.visuals;
 
 public class Modules {
-    // Visuals tab
-    public static boolean logoEnabled = true;
-    public static boolean fpsEnabled = true;
-    public static boolean hitColor = true;
-    public static int hitColorRgb = 0xFF5555;
-    public static boolean jumpCircles = true;
+    // Visuals & Utilities
+    public static boolean chinaHit = true;
+    public static boolean customHand = true;
+    public static boolean fullBright = true;
+    public static boolean hitColor = false;
+    public static boolean hitboxCustomizer = false;
+    public static boolean jumpCircles = false;
     public static boolean particles = true;
-    public static boolean timeChanger = false;
-    public static String timeMode = "Day";
+    public static boolean renderTweaks = true;
 
-    // HUD tab
-    public static boolean armorStatusEnabled = true;
+    // HUD modules
     public static boolean playerInfo = true;
+    public static boolean armorStatusEnabled = true;
     public static boolean potionsEnabled = true;
+    public static boolean hotkeysEnabled = true;
     public static boolean cooldownsEnabled = true;
 
-    // Utilities tab
-    public static boolean hotkeysEnabled = true;
-    public static boolean autoFish = false;
-    public static boolean brightness = true;
-
-    // Координаты для перетаскивания элементов HUD (сохраняются при перемещении в чате)
-    public static int logoX = 15;
-    public static int logoY = 15;
-    
-    public static int playerInfoX = 15;
-    public static int playerInfoY = 120;
-    
-    public static int hotkeysX = -120; // Относительно правого края, если отрицательное
-    public static int hotkeysY = 120;
+    // Координаты для перемещения элементов HUD в чате
+    public static int playerInfoX = 30;
+    public static int playerInfoY = 220;
+    public static int potionsX = 30;
+    public static int potionsY = 100;
+    public static int hotkeysX = -130; // Относительно правого края
+    public static int hotkeysY = 200;
 }
