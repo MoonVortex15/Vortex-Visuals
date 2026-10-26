@@ -73,14 +73,14 @@ public class VortexScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.fillGradient(0, 0, this.width, this.height, 0xEE08080C, 0xFFA000000);
+        context.fillGradient(0, 0, this.width, this.height, 0xEE08080C, 0xFF000000);
 
         int panelW = 360;
         int panelH = 250;
         int panelX = (this.width - panelW) / 2;
         int panelY = (this.height - panelH) / 2;
 
-        // Фон главного окна (темный премиум-стиль с точной границей)
+        // Фон главного окна
         context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xFF0E0E12);
         context.drawBorder(panelX, panelY, panelW, panelH, 0xFF22222D);
 
