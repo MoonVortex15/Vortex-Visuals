@@ -15,18 +15,18 @@ public class HudRenderer {
         int width = client.getWindow().getScaledWidth();
         int height = client.getWindow().getScaledHeight();
 
-        // 1. Логотип Vortex
+        // 1. Логотип
         if (Modules.logoEnabled) {
-            context.drawTextWithShadow(client.textRenderer, "Vortex Visuals", 5, 5, 0x00FFCC);
+            context.drawTextWithShadow(client.textRenderer, "Vortex Visuals", 10, 10, 0x00FFCC);
         }
 
-        // 2. Счетчик FPS
+        // 2. FPS
         if (Modules.fpsEnabled) {
             int fps = client.getCurrentFps();
-            context.drawTextWithShadow(client.textRenderer, "FPS: " + fps, 5, 17, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "FPS: " + fps, 10, 22, 0xFFFFFF);
         }
 
-        // 3. Умный Армор-Худ вокруг хотбара
+        // 3. Умный Армор-Худ вокруг хотбара (как ты просил!)
         if (Modules.armorStatusEnabled) {
             int hotbarLeft = width / 2 - 91;
             int hotbarRight = width / 2 + 91;
