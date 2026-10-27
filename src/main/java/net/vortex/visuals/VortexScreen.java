@@ -17,6 +17,12 @@ public class VortexScreen extends Screen {
         super.init();
     }
 
+    // ОТМЕНЯЕМ ВАНИЛЬНОЕ РАЗМЫТИЕ ФОНА ИГРЫ
+    @Override
+    public boolean isBlurred() {
+        return false;
+    }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int centerX = this.width / 2;
@@ -24,7 +30,6 @@ public class VortexScreen extends Screen {
         int panelX = centerX - 230;
         int panelY = centerY - 140;
 
-        // Вкладки сверху
         if (mouseY >= panelY + 18 && mouseY <= panelY + 42) {
             if (mouseX >= panelX + 25 && mouseX <= panelX + 90) { currentTab = Tab.VISUALS; return true; }
             if (mouseX >= panelX + 100 && mouseX <= panelX + 150) { currentTab = Tab.HUD; return true; }
@@ -52,8 +57,8 @@ public class VortexScreen extends Screen {
             if (checkClick(mouseX, mouseY, startX, startY, cardW, cardH, 0, 0)) Modules.playerInfo = !Modules.playerInfo;
             if (checkClick(mouseX, mouseY, startX, startY, cardW, cardH, 1, 0)) Modules.armorStatusEnabled = !Modules.armorStatusEnabled;
             if (checkClick(mouseX, mouseY, startX, startY, cardW, cardH, 0, 1)) Modules.potionsEnabled = !Modules.potionsEnabled;
-            if (checkClick(mouseX, mouseY, startX, startY, cardW, cardH, 1, 1)) Modules.hotkeysEnabled = !Modules.hotkeysEnabled;
-            if (checkClick(mouseX, mouseY, startX, startY, cardW, cardH, 0, 2)) Modules.musicBarEnabled = !Modules.musicBarEnabled;
+            if (checkClick(mouseX, mouseY, startX, startY, cardW, cardH, 1, 1)) Modules.cooldownsEnabled = !Modules.cooldownsEnabled;
+            if (checkClick(mouseX, mouseY, startX, startY, cardW, cardH, 0, 2)) Modules.hotkeysEnabled = !Modules.hotkeysEnabled;
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
@@ -67,24 +72,21 @@ public class VortexScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Легкое полупрозрачное затемнение вместо глухой черноты (эффект размытия/вуали)
-        context.fillGradient(0, 0, this.width, this.height, 0x60000000, 0x80000000);
+        // Чистый и резкий темный фон без ванильной мути
+        context.fill(0, 0, this.width, this.height, 0xB0000000);
 
         int panelW = 460;
         int panelH = 300;
         int panelX = (this.width - panelW) / 2;
         int panelY = (this.height - panelH) / 2;
 
-        // Окно меню в киберпанк стиле
-        context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xDD0C0B12);
+        context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xFF0B0A10);
         context.drawBorder(panelX, panelY, panelW, panelH, 0xFF242035);
 
-        // Вкладки
         drawTab(context, "Visuals", panelX + 25, panelY + 18, 65, 20, currentTab == Tab.VISUALS);
         drawTab(context, "HUD", panelX + 100, panelY + 18, 45, 20, currentTab == Tab.HUD);
         drawTab(context, "Utilities", panelX + 155, panelY + 18, 65, 20, currentTab == Tab.UTILITIES);
 
-        // Поле поиска
         int searchX = panelX + panelW - 170;
         int searchY = panelY + 16;
         context.fill(searchX, searchY, searchX + 145, searchY + 24, 0xFF14131C);
@@ -109,11 +111,9 @@ public class VortexScreen extends Screen {
             drawFeatureCard(context, "Player Info", Modules.playerInfo, false, startX, startY, 0, 0, cardW, cardH);
             drawFeatureCard(context, "Armor Status", Modules.armorStatusEnabled, false, startX, startY, 1, 0, cardW, cardH);
             drawFeatureCard(context, "Potions HUD", Modules.potionsEnabled, false, startX, startY, 0, 1, cardW, cardH);
-            drawFeatureCard(context, "Hotkeys HUD", Modules.hotkeysEnabled, false, startX, startY, 1, 1, cardW, cardH);
-            drawFeatureCard(context, "Music Bar", Modules.musicBarEnabled, false, startX, startY, 0, 2, cardW, cardH);
+            drawFeatureCard(context, "Cooldowns", Modules.cooldownsEnabled, false, startX, startY, 1, 1, cardW, cardH);
+            drawFeatureCard(context, "Hotkeys HUD", Modules.hotkeysEnabled, false, startX, startY, 0, 2, cardW, cardH);
         }
-
-        super.render(context, mouseX, mouseY, delta);
     }
 
     private void drawTab(DrawContext context, String name, int x, int y, int w, int h, boolean active) {
@@ -131,7 +131,6 @@ public class VortexScreen extends Screen {
         String title = name + (hasSettings ? " §b[⚙]" : "");
         context.drawTextWithShadow(this.textRenderer, title, x + 14, y + 11, state ? 0xFFEEEEFF : 0x9995A6);
 
-        // Фиолетовый тумблер
         int tw = 32, th = 16;
         int tx = x + w - tw - 12;
         int ty = y + (h - th) / 2;
