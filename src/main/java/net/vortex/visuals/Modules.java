@@ -6,13 +6,13 @@ public class Modules {
     public static boolean customHand = true;
     public static boolean fullBright = true;
     public static boolean hitColor = false;
-    public static int hitColorRgb = 0xFF5555; // Для настроек цвета удара
+    public static int hitColorRgb = 0xFF5555;
     public static boolean hitboxCustomizer = false;
     public static boolean jumpCircles = false;
     public static boolean particles = true;
     public static boolean renderTweaks = true;
 
-    // Time Changer (для кнопки [⚙])
+    // Time Changer
     public static boolean timeChanger = false;
     public static String timeMode = "Day";
 
@@ -20,14 +20,19 @@ public class Modules {
     public static boolean playerInfo = true;
     public static boolean armorStatusEnabled = true;
     public static boolean potionsEnabled = true;
-    public static boolean hotkeysEnabled = true;
-    public static boolean cooldownsEnabled = true;
+    public static boolean hotkeysEnabled = false; // По умолчанию выключено, без жестких биндов на экране
+    public static boolean musicBarEnabled = true; // Плеер музыки как на референсе
 
-    // Координаты для перемещения элементов HUD в чате
-    public static int playerInfoX = 30;
+    // Координаты для свободного перетаскивания элементов в чате
+    public static int musicBarX = 20;
+    public static int musicBarY = 20;
+    
+    public static int potionsX = 20;
+    public static int potionsY = 130;
+    
+    public static int playerInfoX = 20;
     public static int playerInfoY = 220;
-    public static int potionsX = 30;
-    public static int potionsY = 100;
-    public static int hotkeysX = -130;
-    public static int hotkeysY = 200;
+    
+    public static int hotkeysX = -150; // Относительно правого края
+    public static int hotkeysY = 150;
 }
