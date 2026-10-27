@@ -25,14 +25,14 @@ public class VortexScreen extends Screen {
         int panelY = centerY - 140;
 
         // Вкладки сверху
-        if (mouseY >= panelY + 20 && mouseY <= panelY + 45) {
+        if (mouseY >= panelY + 18 && mouseY <= panelY + 42) {
             if (mouseX >= panelX + 25 && mouseX <= panelX + 90) { currentTab = Tab.VISUALS; return true; }
             if (mouseX >= panelX + 100 && mouseX <= panelX + 150) { currentTab = Tab.HUD; return true; }
             if (mouseX >= panelX + 160 && mouseX <= panelX + 240) { currentTab = Tab.UTILITIES; return true; }
         }
 
         int startX = panelX + 25;
-        int startY = panelY + 75;
+        int startY = panelY + 70;
         int cardW = 195;
         int cardH = 34;
 
@@ -53,6 +53,7 @@ public class VortexScreen extends Screen {
             if (checkClick(mouseX, mouseY, startX, startY, cardW, cardH, 1, 0)) Modules.armorStatusEnabled = !Modules.armorStatusEnabled;
             if (checkClick(mouseX, mouseY, startX, startY, cardW, cardH, 0, 1)) Modules.potionsEnabled = !Modules.potionsEnabled;
             if (checkClick(mouseX, mouseY, startX, startY, cardW, cardH, 1, 1)) Modules.hotkeysEnabled = !Modules.hotkeysEnabled;
+            if (checkClick(mouseX, mouseY, startX, startY, cardW, cardH, 0, 2)) Modules.musicBarEnabled = !Modules.musicBarEnabled;
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
@@ -66,32 +67,32 @@ public class VortexScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Заменено на правильный 8-значный hex цвет
-        context.fillGradient(0, 0, this.width, this.height, 0xEE050508, 0xFF000000);
+        // Легкое полупрозрачное затемнение вместо глухой черноты (эффект размытия/вуали)
+        context.fillGradient(0, 0, this.width, this.height, 0x60000000, 0x80000000);
 
         int panelW = 460;
         int panelH = 300;
         int panelX = (this.width - panelW) / 2;
         int panelY = (this.height - panelH) / 2;
 
-        // Основное окно с глубоким темно-фиолетовым стилем
-        context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xFF0B0B10);
-        context.drawBorder(panelX, panelY, panelW, panelH, 0xFF1C1A29);
+        // Окно меню в киберпанк стиле
+        context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xDD0C0B12);
+        context.drawBorder(panelX, panelY, panelW, panelH, 0xFF242035);
 
-        // Вкладки сверху
-        drawTab(context, "Visuals", panelX + 25, panelY + 20, 65, 20, currentTab == Tab.VISUALS);
-        drawTab(context, "HUD", panelX + 100, panelY + 20, 45, 20, currentTab == Tab.HUD);
-        drawTab(context, "Utilities", panelX + 155, panelY + 20, 65, 20, currentTab == Tab.UTILITIES);
+        // Вкладки
+        drawTab(context, "Visuals", panelX + 25, panelY + 18, 65, 20, currentTab == Tab.VISUALS);
+        drawTab(context, "HUD", panelX + 100, panelY + 18, 45, 20, currentTab == Tab.HUD);
+        drawTab(context, "Utilities", panelX + 155, panelY + 18, 65, 20, currentTab == Tab.UTILITIES);
 
-        // Поле поиска справа сверху
+        // Поле поиска
         int searchX = panelX + panelW - 170;
-        int searchY = panelY + 18;
+        int searchY = panelY + 16;
         context.fill(searchX, searchY, searchX + 145, searchY + 24, 0xFF14131C);
         context.drawBorder(searchX, searchY, 145, 24, 0xFF221F30);
         context.drawTextWithShadow(this.textRenderer, "🔍 Search", searchX + 10, searchY + 8, 0x777588);
 
         int startX = panelX + 25;
-        int startY = panelY + 75;
+        int startY = panelY + 70;
         int cardW = 195;
         int cardH = 34;
 
@@ -109,6 +110,7 @@ public class VortexScreen extends Screen {
             drawFeatureCard(context, "Armor Status", Modules.armorStatusEnabled, false, startX, startY, 1, 0, cardW, cardH);
             drawFeatureCard(context, "Potions HUD", Modules.potionsEnabled, false, startX, startY, 0, 1, cardW, cardH);
             drawFeatureCard(context, "Hotkeys HUD", Modules.hotkeysEnabled, false, startX, startY, 1, 1, cardW, cardH);
+            drawFeatureCard(context, "Music Bar", Modules.musicBarEnabled, false, startX, startY, 0, 2, cardW, cardH);
         }
 
         super.render(context, mouseX, mouseY, delta);
