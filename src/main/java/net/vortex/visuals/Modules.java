@@ -21,6 +21,17 @@ public class Modules {
     public static boolean particles = false;
     public static boolean renderTweaks = false;
 
+    // Block Overlay customization
+    public static boolean blockOverlayEnabled = false;
+    public static int blockOverlayFillRed = 145;
+    public static int blockOverlayFillGreen = 60;
+    public static int blockOverlayFillBlue = 255;
+    public static int blockOverlayOutlineRed = 210;
+    public static int blockOverlayOutlineGreen = 160;
+    public static int blockOverlayOutlineBlue = 255;
+    public static int blockOverlayAlpha = 70;
+    public static int blockOverlayLineWidth = 2;
+
     // Custom crosshair
     public static boolean customCrosshairEnabled = false;
     public static int crosshairThickness = 2;
