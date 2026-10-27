@@ -12,7 +12,6 @@ public class HudRenderer {
     private static String draggingElement = null;
     private static int dragOffsetX = 0;
     private static int dragOffsetY = 0;
-    private static boolean wasMousePressed = false;
 
     public static void render(DrawContext context, RenderTickCounter tickCounter) {
         MinecraftClient client = MinecraftClient.getInstance();
@@ -22,26 +21,24 @@ public class HudRenderer {
         int height = client.getWindow().getScaledHeight();
         boolean inChat = client.currentScreen instanceof ChatScreen;
 
+        // Точный расчет координат мыши под размер окна игры
         double mouseX = client.mouse.getX() * (double) client.getWindow().getScaledWidth() / (double) client.getWindow().getWidth();
         double mouseY = client.mouse.getY() * (double) client.getWindow().getScaledHeight() / (double) client.getWindow().getHeight();
-        boolean isMousePressed = GLFW.glfwGetMouseButton(client.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
+        boolean isPressed = GLFW.glfwGetMouseButton(client.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
 
-        // Логика перетаскивания элементов HUD мышкой в чате
         if (inChat) {
-            if (!isMousePressed) {
+            if (!isPressed) {
                 draggingElement = null;
-            }
-
-            if (draggingElement != null) {
-                if (draggingElement.equals("musicBar")) {
-                    Modules.musicBarX = (int) mouseX - dragOffsetX;
-                    Modules.musicBarY = (int) mouseY - dragOffsetY;
-                } else if (draggingElement.equals("potions")) {
+            } else if (draggingElement != null) {
+                if (draggingElement.equals("potions")) {
                     Modules.potionsX = (int) mouseX - dragOffsetX;
                     Modules.potionsY = (int) mouseY - dragOffsetY;
                 } else if (draggingElement.equals("playerInfo")) {
                     Modules.playerInfoX = (int) mouseX - dragOffsetX;
                     Modules.playerInfoY = (int) mouseY - dragOffsetY;
+                } else if (draggingElement.equals("cooldowns")) {
+                    Modules.cooldownsX = (int) mouseX - dragOffsetX;
+                    Modules.cooldownsY = (int) mouseY - dragOffsetY;
                 } else if (draggingElement.equals("hotkeys")) {
                     Modules.hotkeysX = (int) mouseX - dragOffsetX;
                     Modules.hotkeysY = (int) mouseY - dragOffsetY;
@@ -50,32 +47,20 @@ public class HudRenderer {
         } else {
             draggingElement = null;
         }
-        wasMousePressed = isMousePressed;
 
-        // 1. Музыкальный плеер (как на референсе сверху слева)
-        if (Modules.musicBarEnabled) {
-            int w = 180, h = 65;
-            drawHudCard(context, Modules.musicBarX, Modules.musicBarY, w, h, "musicBar", inChat, mouseX, mouseY);
-            context.drawTextWithShadow(client.textRenderer, "§fAlien", Modules.musicBarX + 45, Modules.musicBarY + 10, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "§8@ilymeady", Modules.musicBarX + 45, Modules.musicBarY + 22, 0x888599);
-            // Полоса прогресса песни
-            context.fill(Modules.musicBarX + 12, Modules.musicBarY + 45, Modules.musicBarX + 168, Modules.musicBarY + 48, 0xFF221F30);
-            context.fill(Modules.musicBarX + 12, Modules.musicBarY + 45, Modules.musicBarX + 90, Modules.musicBarY + 48, 0xFF7A3EE4);
-        }
-
-        // 2. Панель Зелий (Potions)
+        // 1. Панель Зелий
         if (Modules.potionsEnabled) {
             int w = 145, h = 55;
-            drawHudCard(context, Modules.potionsX, Modules.potionsY, w, h, "potions", inChat, mouseX, mouseY);
+            drawHudCard(context, Modules.potionsX, Modules.potionsY, w, h, "potions", inChat, mouseX, mouseY, isPressed);
             context.drawTextWithShadow(client.textRenderer, "§bPotions", Modules.potionsX + 10, Modules.potionsY + 8, 0xFFFFFF);
             context.drawTextWithShadow(client.textRenderer, "Strength II          ∞", Modules.potionsX + 10, Modules.potionsY + 24, 0xAAAAAA);
             context.drawTextWithShadow(client.textRenderer, "Speed II           3:12", Modules.potionsX + 10, Modules.potionsY + 38, 0xAAAAAA);
         }
 
-        // 3. Блок игрока (Player Info со здоровьем и фиолетовой полоской)
+        // 2. Блок игрока (Player Info со здоровьем и фиолетовой полоской)
         if (Modules.playerInfo) {
             int w = 145, h = 50;
-            drawHudCard(context, Modules.playerInfoX, Modules.playerInfoY, w, h, "playerInfo", inChat, mouseX, mouseY);
+            drawHudCard(context, Modules.playerInfoX, Modules.playerInfoY, w, h, "playerInfo", inChat, mouseX, mouseY, isPressed);
             context.drawTextWithShadow(client.textRenderer, client.player.getName().getString(), Modules.playerInfoX + 12, Modules.playerInfoY + 8, 0xFFFFFF);
             context.drawTextWithShadow(client.textRenderer, "HP / " + (int)client.player.getHealth(), Modules.playerInfoX + 12, Modules.playerInfoY + 22, 0x888599);
             
@@ -83,12 +68,20 @@ public class HudRenderer {
             context.fill(Modules.playerInfoX + 12, Modules.playerInfoY + 36, Modules.playerInfoX + 12 + (int)(121 * (client.player.getHealth() / 20.0f)), Modules.playerInfoY + 40, 0xFF7A3EE4);
         }
 
-        // 4. Панель Хоткеев (выключена по умолчанию, бинды не навязаны)
+        // 3. Панель Кулдаунов (Cooldowns)
+        if (Modules.cooldownsEnabled) {
+            int w = 135, h = 35;
+            drawHudCard(context, Modules.cooldownsX, Modules.cooldownsY, w, h, "cooldowns", inChat, mouseX, mouseY, isPressed);
+            context.drawTextWithShadow(client.textRenderer, "§bCooldowns", Modules.cooldownsX + 10, Modules.cooldownsY + 8, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "Potion          ∞", Modules.cooldownsX + 10, Modules.cooldownsY + 20, 0xAAAAAA);
+        }
+
+        // 4. Панель Хоткеев (без дефолтных биндов)
         if (Modules.hotkeysEnabled) {
             int hx = Modules.hotkeysX < 0 ? width + Modules.hotkeysX : Modules.hotkeysX;
             int hy = Modules.hotkeysY;
             int w = 140, h = 70;
-            drawHudCard(context, hx, hy, w, h, "hotkeys", inChat, mouseX, mouseY);
+            drawHudCard(context, hx, hy, w, h, "hotkeys", inChat, mouseX, mouseY, isPressed);
             context.drawTextWithShadow(client.textRenderer, "⌨ Hot Keys", hx + 10, hy + 8, 0xFFFFFF);
             context.drawTextWithShadow(client.textRenderer, "FullBright       [none]", hx + 10, hy + 26, 0xAAAAAA);
             context.drawTextWithShadow(client.textRenderer, "Visuals Menu   [none]", hx + 10, hy + 42, 0xAAAAAA);
@@ -107,14 +100,12 @@ public class HudRenderer {
         }
     }
 
-    private static void drawHudCard(DrawContext context, int x, int y, int w, int h, String id, boolean inChat, double mouseX, double mouseY) {
-        context.fill(x, y, x + w, y + h, 0xEE0C0B12);
-        context.drawBorder(x, y, w, h, inChat ? 0xFF7A3EE4 : 0xFF242035); // В чате подсвечиваются рамки для перетаскивания
+    private static void drawHudCard(DrawContext context, int x, int y, int w, int h, String id, boolean inChat, double mouseX, double mouseY, boolean isPressed) {
+        context.fill(x, y, x + w, y + h, 0xFF0C0B12);
+        context.drawBorder(x, y, w, h, inChat ? 0xFF7A3EE4 : 0xFF242035);
 
-        if (inChat && !wasMousePressed) {
-            MinecraftClient client = MinecraftClient.getInstance();
-            boolean isPressed = GLFW.glfwGetMouseButton(client.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
-            if (isPressed && mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
+        if (inChat && isPressed && draggingElement == null) {
+            if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
                 draggingElement = id;
                 dragOffsetX = (int) mouseX - x;
                 dragOffsetY = (int) mouseY - y;
