@@ -39,6 +39,24 @@ public final class HudRenderer {
         targetExpiresAt = System.currentTimeMillis() + TARGET_DURATION_MS;
     }
 
+    private static void renderCustomCrosshair(DrawContext ctx, int screenWidth, int screenHeight) {
+        int cx = screenWidth / 2;
+        int cy = screenHeight / 2;
+        int thickness = Math.max(1, Math.min(8, Modules.crosshairThickness));
+        int gap = Math.max(0, Math.min(20, Modules.crosshairGap));
+        int color = 0xFF000000 | (Math.max(0, Math.min(255, Modules.crosshairRed)) << 16)
+                | (Math.max(0, Math.min(255, Modules.crosshairGreen)) << 8)
+                | Math.max(0, Math.min(255, Modules.crosshairBlue));
+        int arm = 5;
+        ctx.fill(cx - gap - arm, cy - thickness / 2, cx - gap, cy - thickness / 2 + thickness, color);
+        ctx.fill(cx + gap, cy - thickness / 2, cx + gap + arm, cy - thickness / 2 + thickness, color);
+        ctx.fill(cx - thickness / 2, cy - gap - arm, cx - thickness / 2 + thickness, cy - gap, color);
+        ctx.fill(cx - thickness / 2, cy + gap, cx - thickness / 2 + thickness, cy + gap + arm, color);
+        if (Modules.crosshairCenterDot) {
+            ctx.fill(cx - 1, cy - 1, cx + 2, cy + 2, color);
+        }
+    }
+
     /** Saves current HUD positions and module toggles to the config directory. */
     public static void saveConfig() {
         MinecraftClient mc = MinecraftClient.getInstance();
@@ -84,6 +102,13 @@ public final class HudRenderer {
         props.setProperty("jumpCircles", String.valueOf(Modules.jumpCircles));
         props.setProperty("particles", String.valueOf(Modules.particles));
         props.setProperty("renderTweaks", String.valueOf(Modules.renderTweaks));
+        props.setProperty("customCrosshairEnabled", String.valueOf(Modules.customCrosshairEnabled));
+        props.setProperty("crosshairThickness", String.valueOf(Modules.crosshairThickness));
+        props.setProperty("crosshairGap", String.valueOf(Modules.crosshairGap));
+        props.setProperty("crosshairRed", String.valueOf(Modules.crosshairRed));
+        props.setProperty("crosshairGreen", String.valueOf(Modules.crosshairGreen));
+        props.setProperty("crosshairBlue", String.valueOf(Modules.crosshairBlue));
+        props.setProperty("crosshairCenterDot", String.valueOf(Modules.crosshairCenterDot));
 
         try {
             Files.createDirectories(path.getParent());
@@ -147,6 +172,9 @@ public final class HudRenderer {
 
         if (Modules.inventoryHudEnabled)
             renderInventory(ctx, mc, editing, mx, my, pressed);
+
+        if (Modules.customCrosshairEnabled)
+            renderCustomCrosshair(ctx, sw, sh);
     }
 
     // ---------------- WATERMARK ----------------
