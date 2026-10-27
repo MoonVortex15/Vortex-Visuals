@@ -4,7 +4,8 @@
   "package": "net.vortex.visuals.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "NoBlurMixin"
+    "NoBlurMixin",
+    "CustomCrosshairMixin"
   ],
   "injectors": {
     "defaultRequire": 1
