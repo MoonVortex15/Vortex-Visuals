@@ -1,4 +1,4 @@
-package net.vortex.visuals;
+package net.vortex.visuals.hud;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
