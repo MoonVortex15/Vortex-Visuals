@@ -13,10 +13,16 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import org.lwjgl.glfw.GLFW;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public final class HudRenderer {
     private static PlayerEntity lastTarget;
@@ -29,6 +35,9 @@ public final class HudRenderer {
     private static long lastPotionRefresh;
     private static List<StatusEffectInstance> cachedEffects = List.of();
 
+    private static boolean positionsLoaded;
+    private static final String CONFIG_FILE = "vortex-visuals-hud.properties";
+
     private HudRenderer() {}
 
     public static void setTarget(PlayerEntity target) {
@@ -39,12 +48,18 @@ public final class HudRenderer {
     public static void render(DrawContext ctx, RenderTickCounter tickCounter) {
         MinecraftClient mc = MinecraftClient.getInstance();
 
+        if (!positionsLoaded) {
+            loadPositions(mc);
+            positionsLoaded = true;
+        }
+
         if (mc.player == null || mc.world == null || mc.options.hudHidden) {
             return;
         }
 
         int sw = mc.getWindow().getScaledWidth();
         int sh = mc.getWindow().getScaledHeight();
+
         boolean editing = mc.currentScreen instanceof ChatScreen;
 
         double mx = mc.mouse.getX() * (double) sw / mc.getWindow().getWidth();
@@ -55,7 +70,9 @@ public final class HudRenderer {
                 GLFW.GLFW_MOUSE_BUTTON_LEFT
         ) == GLFW.GLFW_PRESS;
 
-        if (!editing || !pressed) {
+        // Save coordinates when the user releases the mouse.
+        if ((!editing || !pressed) && draggingElement != null) {
+            savePositions(mc);
             draggingElement = null;
         }
 
@@ -81,6 +98,81 @@ public final class HudRenderer {
 
         if (Modules.inventoryHudEnabled) {
             renderInventory(ctx, mc, editing, mx, my, pressed);
+        }
+    }
+
+    private static Path configPath(MinecraftClient mc) {
+        return mc.runDirectory.toPath()
+                .resolve("config")
+                .resolve(CONFIG_FILE);
+    }
+
+    private static void loadPositions(MinecraftClient mc) {
+        Path path = configPath(mc);
+
+        if (!Files.exists(path)) {
+            return;
+        }
+
+        Properties props = new Properties();
+
+        try (InputStream in = Files.newInputStream(path)) {
+            props.load(in);
+
+            Modules.watermarkX = readInt(props, "watermarkX", Modules.watermarkX);
+            Modules.watermarkY = readInt(props, "watermarkY", Modules.watermarkY);
+
+            Modules.playerInfoX = readInt(props, "playerInfoX", Modules.playerInfoX);
+            Modules.playerInfoY = readInt(props, "playerInfoY", Modules.playerInfoY);
+
+            Modules.potionsX = readInt(props, "potionsX", Modules.potionsX);
+            Modules.potionsY = readInt(props, "potionsY", Modules.potionsY);
+
+            Modules.cooldownsX = readInt(props, "cooldownsX", Modules.cooldownsX);
+            Modules.cooldownsY = readInt(props, "cooldownsY", Modules.cooldownsY);
+
+            Modules.inventoryX = readInt(props, "inventoryX", Modules.inventoryX);
+            Modules.inventoryY = readInt(props, "inventoryY", Modules.inventoryY);
+        } catch (IOException e) {
+            System.err.println("[Vortex Visuals] Could not load HUD positions: " + e.getMessage());
+        }
+    }
+
+    private static int readInt(Properties props, String key, int fallback) {
+        try {
+            return Integer.parseInt(props.getProperty(key, String.valueOf(fallback)));
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
+
+    private static void savePositions(MinecraftClient mc) {
+        Path path = configPath(mc);
+        Properties props = new Properties();
+
+        props.setProperty("watermarkX", String.valueOf(Modules.watermarkX));
+        props.setProperty("watermarkY", String.valueOf(Modules.watermarkY));
+
+        props.setProperty("playerInfoX", String.valueOf(Modules.playerInfoX));
+        props.setProperty("playerInfoY", String.valueOf(Modules.playerInfoY));
+
+        props.setProperty("potionsX", String.valueOf(Modules.potionsX));
+        props.setProperty("potionsY", String.valueOf(Modules.potionsY));
+
+        props.setProperty("cooldownsX", String.valueOf(Modules.cooldownsX));
+        props.setProperty("cooldownsY", String.valueOf(Modules.cooldownsY));
+
+        props.setProperty("inventoryX", String.valueOf(Modules.inventoryX));
+        props.setProperty("inventoryY", String.valueOf(Modules.inventoryY));
+
+        try {
+            Files.createDirectories(path.getParent());
+
+            try (OutputStream out = Files.newOutputStream(path)) {
+                props.store(out, "Vortex Visuals HUD positions");
+            }
+        } catch (IOException e) {
+            System.err.println("[Vortex Visuals] Could not save HUD positions: " + e.getMessage());
         }
     }
 
@@ -115,7 +207,6 @@ public final class HudRenderer {
                 0xDFFFFFFF, false);
     }
 
-    // Target HUD: appears after hitting a player and stays for 15 seconds.
     private static void renderTarget(
             DrawContext c, MinecraftClient mc,
             boolean edit, double mx, double my, boolean pressed
@@ -131,7 +222,6 @@ public final class HudRenderer {
             lastTarget = null;
         }
 
-        // Show a preview while editing HUD in chat.
         if (target == null && !edit) {
             return;
         }
@@ -275,19 +365,26 @@ public final class HudRenderer {
         }
     }
 
+    // Inventory HUD: main inventory only, 3 rows x 9 columns.
     private static void renderInventory(
             DrawContext c, MinecraftClient mc,
             boolean edit, double mx, double my, boolean pressed
     ) {
         int x = Modules.inventoryX;
         int y = Modules.inventoryY;
-        int cell = 18;
+
+        int cell = 16;
         int gap = 2;
+        int step = cell + gap;
         int padding = 6;
 
-        card(c, x, y, 176, 78, "inventory", edit, mx, my, pressed);
+        int width = padding * 2 + 9 * step - gap;
+        int height = 72;
+
+        card(c, x, y, width, height, "inventory", edit, mx, my, pressed);
+
         c.drawText(mc.textRenderer, "INVENTORY",
-                x + 8, y + 5, 0xFFFFFFFF, false);
+                x + padding, y + 5, 0xFFFFFFFF, false);
 
         int startX = x + padding;
         int startY = y + 18;
@@ -295,18 +392,29 @@ public final class HudRenderer {
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 int slot = 9 + row * 9 + col;
-                int sx = startX + col * (cell + gap);
-                int sy = startY + row * (cell + gap);
+                int sx = startX + col * step;
+                int sy = startY + row * step;
 
-                c.fill(sx, sy, sx + cell, sy + cell, 0x99140F22);
-                c.fill(sx, sy, sx + cell, sy + 1, 0xFF5D2EFF);
-
-                ItemStack stack = mc.player.getInventory().getStack(slot);
-                if (!stack.isEmpty()) {
-                    c.drawItem(stack, sx + 1, sy + 1);
-                    c.drawStackOverlay(mc.textRenderer, stack, sx + 1, sy + 1);
-                }
+                drawInventorySlot(c, mc, slot, sx, sy, cell);
             }
+        }
+    }
+
+    private static void drawInventorySlot(
+            DrawContext c, MinecraftClient mc,
+            int slot, int x, int y, int size
+    ) {
+        c.fill(x, y, x + size, y + size, 0xCC17121F);
+        c.fill(x, y, x + size, y + 1, 0xFF7544D8);
+        c.fill(x, y + size - 1, x + size, y + size, 0x663F2B60);
+        c.fill(x, y, x + 1, y + size, 0x663F2B60);
+        c.fill(x + size - 1, y, x + size, y + size, 0x663F2B60);
+
+        ItemStack stack = mc.player.getInventory().getStack(slot);
+
+        if (!stack.isEmpty()) {
+            c.drawItem(stack, x, y);
+            c.drawStackOverlay(mc.textRenderer, stack, x, y);
         }
     }
 
