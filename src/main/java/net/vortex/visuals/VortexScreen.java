@@ -287,6 +287,15 @@ public class VortexScreen extends Screen {
         c.fill(knobX, y + 2, knobX + 11, y + 13, 0xFFFFFFFF);
     }
 
+    /**
+     * Disable the vanilla blurred menu background. This screen draws its own
+     * dim overlay and panel, so the default background effect is unnecessary.
+     */
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Intentionally empty: prevent the vanilla menu background/blur.
+    }
+
     @Override
     public boolean shouldPause() {
         return false;
