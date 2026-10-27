@@ -1,57 +1,48 @@
-
 package net.vortex.visuals;
 
-public class Modules {
-    // Бой
-    public static boolean deathEffect = false;
-    public static boolean killEffect = false;
-    public static boolean hitSound = false;
-    public static boolean deathSound = false;
-    public static boolean targetEsp = false;
-    public static boolean autoShift = false;
+import net.vortex.visuals.hud.HudRenderer;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.ActionResult;
+import org.lwjgl.glfw.GLFW;
 
-    // Визуалы
-    public static boolean chinaHit = false;
-    public static boolean customHand = false;
-    public static boolean fullBright = false;
-    public static boolean hitColor = false;
-    public static int hitColorRgb = 0xFF5555;
-    public static boolean hitboxCustomizer = false;
-    public static boolean jumpCircles = false;
-    public static boolean particles = false;
-    public static boolean renderTweaks = false;
+public class VortexClient implements ClientModInitializer {
+    private static KeyBinding openMenuKey;
 
-    // HUD
-    public static boolean watermarkEnabled = false;
-    public static boolean playerInfo = false;
-    public static boolean armorStatusEnabled = false;
-    public static boolean potionsEnabled = false;
-    public static boolean cooldownsEnabled = false;
-    public static boolean keybindsEnabled = false;
-    public static boolean keystrokesEnabled = false;
-    public static boolean inventoryHudEnabled = false;
+    @Override
+    public void onInitializeClient() {
+        openMenuKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+                "key.vortex_visuals.open_menu",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_RIGHT_SHIFT,
+                "category.vortex_visuals"
+        ));
 
-    // Позиции HUD
-    public static int watermarkX = 10;
-    public static int watermarkY = 10;
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            while (openMenuKey.wasPressed()) {
+                if (client.currentScreen instanceof VortexScreen) {
+                    client.setScreen(null);
+                } else if (client.player != null) {
+                    client.setScreen(new VortexScreen());
+                }
+            }
+        });
 
-    public static int playerInfoX = 30;
-    public static int playerInfoY = 140;
+        AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
+            if (world.isClient && entity instanceof PlayerEntity target && target != player) {
+                HudRenderer.setTarget(target);
+            }
+            return ActionResult.PASS;
+        });
 
-    public static int potionsX = 30;
-    public static int potionsY = 220;
-
-    public static int cooldownsX = 220;
-    public static int cooldownsY = 220;
-
-    public static int keybindsX = 410;
-    public static int keybindsY = 220;
-
-    public static int keystrokesX = 650;
-    public static int keystrokesY = 520;
-
-    public static int inventoryX = 380;
-    public static int inventoryY = 520;
-    public static int armorX = 30;
-    public static int armorY = 300;
+        net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback.EVENT.register(
+                (drawContext, renderTickCounter) -> HudRenderer.render(drawContext, renderTickCounter)
+        );
+    }
 }
