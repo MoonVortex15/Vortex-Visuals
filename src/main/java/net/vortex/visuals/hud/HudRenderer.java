@@ -1,4 +1,3 @@
-
 package net.vortex.visuals.hud;
 
 import net.vortex.visuals.Modules;
