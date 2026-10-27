@@ -1,3 +1,4 @@
+
 package net.vortex.visuals.hud;
 
 import net.vortex.visuals.Modules;
@@ -6,7 +7,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.ItemStack;
@@ -21,17 +21,10 @@ import java.util.List;
 public final class HudRenderer {
     private static PlayerEntity lastTarget;
     private static long targetExpiresAt;
+    private static final long TARGET_DURATION_MS = 15_000L;
 
-public static void setTarget(PlayerEntity target) {
-    lastTarget = target;
-    targetExpiresAt = System.currentTimeMillis() + 15_000L;
-}
     private static String draggingElement;
     private static int dragOffsetX, dragOffsetY;
-
-    private static PlayerEntity lastTarget;
-    private static long targetExpiresAt;
-    private static final long TARGET_DURATION_MS = 15_000L;
 
     private static long lastPotionRefresh;
     private static List<StatusEffectInstance> cachedEffects = List.of();
@@ -122,7 +115,7 @@ public static void setTarget(PlayerEntity target) {
                 0xDFFFFFFF, false);
     }
 
-    // Target HUD: appears only after hitting a player, stays for 15 seconds.
+    // Target HUD: appears after hitting a player and stays for 15 seconds.
     private static void renderTarget(
             DrawContext c, MinecraftClient mc,
             boolean edit, double mx, double my, boolean pressed
@@ -138,7 +131,7 @@ public static void setTarget(PlayerEntity target) {
             lastTarget = null;
         }
 
-        // Preview is visible while editing HUD in chat; otherwise a real hit is required.
+        // Show a preview while editing HUD in chat.
         if (target == null && !edit) {
             return;
         }
@@ -156,7 +149,6 @@ public static void setTarget(PlayerEntity target) {
             return;
         }
 
-        // Compact target panel with health, armor and held item.
         c.fill(x + 7, y + 8, x + 29, y + 30, 0xFF39245F);
         c.drawItem(new ItemStack(Items.PLAYER_HEAD), x + 10, y + 10);
 
