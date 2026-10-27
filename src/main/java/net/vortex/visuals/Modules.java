@@ -1,7 +1,7 @@
 package net.vortex.visuals;
 
 public class Modules {
-    // Категории функций
+    // Бой
     public static boolean deathEffect = false;
     public static boolean killEffect = false;
     public static boolean hitSound = true;
@@ -9,6 +9,7 @@ public class Modules {
     public static boolean targetEsp = true;
     public static boolean autoShift = false;
 
+    // Визуалы
     public static boolean chinaHit = true;
     public static boolean customHand = true;
     public static boolean fullBright = true;
@@ -19,11 +20,7 @@ public class Modules {
     public static boolean particles = true;
     public static boolean renderTweaks = true;
 
-    // Time Changer
-    public static boolean timeChanger = false;
-    public static String timeMode = "Day";
-
-    // HUD элементы (каждый отключаемый)
+    // HUD элементы (каждый можно независимо включать/выключать)
     public static boolean watermarkEnabled = true;
     public static boolean playerInfo = true;
     public static boolean armorStatusEnabled = true;
@@ -33,7 +30,7 @@ public class Modules {
     public static boolean keystrokesEnabled = true;
     public static boolean inventoryHudEnabled = true;
 
-    // Координаты для свободного перетаскивания в чате
+    // Позиции для перетаскивания элементов в чате
     public static int watermarkX = 10;
     public static int watermarkY = 10;
 
