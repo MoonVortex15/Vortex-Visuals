@@ -21,8 +21,6 @@ public class VortexScreen extends Screen {
     private static final int MUTED = 0xFFB4A2D5;
 
     private int panelX, panelY, panelW, panelH;
-    private int settingsFeature = -1;
-    private int activeSlider = -1;
 
     public VortexScreen() {
         super(Text.literal("Vortex Visuals"));
@@ -30,30 +28,11 @@ public class VortexScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button != 0) {
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
+
         layout();
-        if (settingsFeature >= 0) {
-            if (button == 1) { settingsFeature = -1; activeSlider = -1; return true; }
-            if (button == 0) {
-                int sx = panelX + 166, sw = panelW - 198;
-                for (int slider = 0; slider < 2; slider++) {
-                    int yy = panelY + 126 + slider * 64;
-                    if (inside(mouseX, mouseY, sx, yy - 3, sw, 14)) {
-                        activeSlider = slider; updateSlider(mouseX, sx, sw, slider); return true;
-                    }
-                }
-                if (inside(mouseX, mouseY, panelX + panelW - 45, panelY + 10, 34, 25)) { settingsFeature = -1; return true; }
-            }
-            return super.mouseClicked(mouseX, mouseY, button);
-        }
-        if (button == 1) {
-            int x = panelX + 140, y = panelY + 67, w = panelW - 154;
-            for (int i = 0; i < getFeatureCount(); i++) {
-                int cy = y + i * 38;
-                if (inside(mouseX, mouseY, x, cy, w, 33)) { settingsFeature = i; return true; }
-            }
-            return super.mouseClicked(mouseX, mouseY, button);
-        }
-        if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
 
         int sideX = panelX + 12;
         int sideW = 116;
@@ -88,35 +67,6 @@ public class VortexScreen extends Screen {
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (settingsFeature >= 0 && activeSlider >= 0 && button == 0) {
-            updateSlider(mouseX, panelX + 166, panelW - 198, activeSlider); return true;
-        }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
-    }
-
-    @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0 && activeSlider >= 0) { activeSlider = -1; HudRenderer.saveConfig(); return true; }
-        return super.mouseReleased(mouseX, mouseY, button);
-    }
-
-    private void updateSlider(double mouseX, int x, int w, int slider) {
-        int value = (int)Math.round(Math.max(0, Math.min(1, (mouseX - x) / (double)Math.max(1, w))) * 600);
-        if (currentCategory != Category.HUD) return;
-        switch (settingsFeature) {
-            case 0 -> { if (slider == 0) Modules.watermarkX = value; else Modules.watermarkY = value; }
-            case 1 -> { if (slider == 0) Modules.playerInfoX = value; else Modules.playerInfoY = value; }
-            case 2 -> { if (slider == 0) Modules.armorX = value; else Modules.armorY = value; }
-            case 3 -> { if (slider == 0) Modules.potionsX = value; else Modules.potionsY = value; }
-            case 4 -> { if (slider == 0) Modules.cooldownsX = value; else Modules.cooldownsY = value; }
-            case 5 -> { if (slider == 0) Modules.keybindsX = value; else Modules.keybindsY = value; }
-            case 6 -> { if (slider == 0) Modules.inventoryX = value; else Modules.inventoryY = value; }
-            default -> { }
-        }
-    }
-
     private void layout() {
         panelW = Math.min(560, width - 16);
         panelH = Math.min(390, height - 16);
@@ -133,7 +83,7 @@ public class VortexScreen extends Screen {
     private int getFeatureCount() {
         return switch (currentCategory) {
             case COMBAT -> 5;
-            case VISUALS -> 2;
+            case VISUALS -> 3;
             case HUD -> 7;
             case UTILITIES, SETTINGS -> 0;
         };
@@ -154,6 +104,7 @@ public class VortexScreen extends Screen {
                 switch (i) {
                     case 0 -> Modules.fullBright = !Modules.fullBright;
                     case 1 -> Modules.particles = !Modules.particles;
+                    case 2 -> Modules.customCrosshairEnabled = !Modules.customCrosshairEnabled;
                 }
             }
             case HUD -> {
@@ -254,12 +205,6 @@ public class VortexScreen extends Screen {
         c.drawTextWithShadow(textRenderer, "X",
                 panelX + panelW - 20, panelY + 16, PURPLE);
 
-        if (settingsFeature >= 0) {
-            renderModuleSettings(c);
-            super.render(c, mouseX, mouseY, delta);
-            return;
-        }
-
         // Feature cards.
         int startY = panelY + 67;
         int cardW = panelW - 154;
@@ -303,52 +248,6 @@ public class VortexScreen extends Screen {
         super.render(c, mouseX, mouseY, delta);
     }
 
-    private void renderModuleSettings(DrawContext c) {
-        if (currentCategory != Category.HUD || settingsFeature < 0 || settingsFeature >= getFeatureCount()) {
-            c.drawTextWithShadow(textRenderer, "No settings available for this module yet",
-                    panelX + 152, panelY + 88, MUTED);
-            return;
-        }
-
-        Feature feature = getFeature(settingsFeature);
-        c.drawTextWithShadow(textRenderer, feature.name + " Settings",
-                panelX + 152, panelY + 70, TEXT);
-        c.drawTextWithShadow(textRenderer, "Drag the sliders to move this HUD",
-                panelX + 152, panelY + 88, MUTED);
-
-        int x = panelX + 166;
-        int w = panelW - 198;
-        int yX = panelY + 126;
-        int yY = panelY + 190;
-        int vx = getHudCoordinate(settingsFeature, 0);
-        int vy = getHudCoordinate(settingsFeature, 1);
-        drawCoordinateSlider(c, "X", x, yX, w, vx);
-        drawCoordinateSlider(c, "Y", x, yY, w, vy);
-        c.drawTextWithShadow(textRenderer, "Right-click outside the sliders or press X to close",
-                panelX + 152, panelY + panelH - 28, MUTED);
-    }
-
-    private int getHudCoordinate(int feature, int axis) {
-        return switch (feature) {
-            case 0 -> axis == 0 ? Modules.watermarkX : Modules.watermarkY;
-            case 1 -> axis == 0 ? Modules.playerInfoX : Modules.playerInfoY;
-            case 2 -> axis == 0 ? Modules.armorX : Modules.armorY;
-            case 3 -> axis == 0 ? Modules.potionsX : Modules.potionsY;
-            case 4 -> axis == 0 ? Modules.cooldownsX : Modules.cooldownsY;
-            case 5 -> axis == 0 ? Modules.keybindsX : Modules.keybindsY;
-            case 6 -> axis == 0 ? Modules.inventoryX : Modules.inventoryY;
-            default -> 0;
-        };
-    }
-
-    private void drawCoordinateSlider(DrawContext c, String label, int x, int y, int w, int value) {
-        c.drawTextWithShadow(textRenderer, label + "  " + value, panelX + 152, y - 18, TEXT);
-        c.fill(x, y, x + w, y + 8, 0xFF30243F);
-        c.fill(x, y, x + (int)(w * Math.max(0, Math.min(600, value)) / 600.0), y + 8, PURPLE);
-        int knobX = x + (int)(w * Math.max(0, Math.min(600, value)) / 600.0);
-        c.fill(knobX - 3, y - 3, knobX + 4, y + 11, 0xFFF5EEFF);
-    }
-
     private record Feature(String name, String description,
                            boolean enabled) {}
 
@@ -372,8 +271,7 @@ public class VortexScreen extends Screen {
                 case 3 -> new Feature("Potions HUD", "Active effects and timers", Modules.potionsEnabled);
                 case 4 -> new Feature("Cooldown HUD", "Item cooldown indicators", Modules.cooldownsEnabled);
                 case 5 -> new Feature("Keybinds HUD", "Active keybinds", Modules.keybindsEnabled);
-                case 6 -> new Feature("Inventory HUD", "Inventory preview", Modules.inventoryHudEnabled);
-                default -> new Feature("Unavailable", "No module", false);
+                default -> new Feature("Inventory HUD", "Inventory preview", Modules.inventoryHudEnabled);
             };
             default -> new Feature("Unavailable", "No module", false);
         };
