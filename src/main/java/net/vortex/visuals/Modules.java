@@ -28,7 +28,6 @@ public class Modules {
     public static boolean potionsEnabled = false;
     public static boolean cooldownsEnabled = false;
     public static boolean keybindsEnabled = false;
-    public static boolean keystrokesEnabled = false;
     public static boolean inventoryHudEnabled = false;
 
     // Позиции HUD
@@ -47,8 +46,6 @@ public class Modules {
     public static int keybindsX = 410;
     public static int keybindsY = 220;
 
-    public static int keystrokesX = 650;
-    public static int keystrokesY = 520;
 
     public static int inventoryX = 380;
     public static int inventoryY = 520;
