@@ -26,15 +26,22 @@ public class HudRenderer {
         double mouseY = client.mouse.getY() * (double) client.getWindow().getScaledHeight() / (double) client.getWindow().getHeight();
         boolean isMousePressed = GLFW.glfwGetMouseButton(client.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
 
+        // Логика перетаскивания элементов HUD мышкой в чате
         if (inChat) {
-            if (!isMousePressed) draggingElement = null;
+            if (!isMousePressed) {
+                draggingElement = null;
+            }
+
             if (draggingElement != null) {
-                if (draggingElement.equals("playerInfo")) {
-                    Modules.playerInfoX = (int) mouseX - dragOffsetX;
-                    Modules.playerInfoY = (int) mouseY - dragOffsetY;
+                if (draggingElement.equals("musicBar")) {
+                    Modules.musicBarX = (int) mouseX - dragOffsetX;
+                    Modules.musicBarY = (int) mouseY - dragOffsetY;
                 } else if (draggingElement.equals("potions")) {
                     Modules.potionsX = (int) mouseX - dragOffsetX;
                     Modules.potionsY = (int) mouseY - dragOffsetY;
+                } else if (draggingElement.equals("playerInfo")) {
+                    Modules.playerInfoX = (int) mouseX - dragOffsetX;
+                    Modules.playerInfoY = (int) mouseY - dragOffsetY;
                 } else if (draggingElement.equals("hotkeys")) {
                     Modules.hotkeysX = (int) mouseX - dragOffsetX;
                     Modules.hotkeysY = (int) mouseY - dragOffsetY;
@@ -45,46 +52,49 @@ public class HudRenderer {
         }
         wasMousePressed = isMousePressed;
 
-        // 1. Панель игрока (как на скриншоте: аватарка, ник, HP и фиолетовая полоска)
-        if (Modules.playerInfo) {
-            int px = Modules.playerInfoX;
-            int py = Modules.playerInfoY;
-            int w = 135, h = 50;
-            drawHudCard(context, px, py, w, h, "playerInfo", inChat, mouseX, mouseY);
-
-            context.drawTextWithShadow(client.textRenderer, client.player.getName().getString(), px + 12, py + 8, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "HP / " + (int)client.player.getHealth(), px + 12, py + 22, 0x888599);
-            
-            // Фиолетовая полоска здоровья
-            context.fill(px + 12, py + 36, px + 12 + 110, py + 40, 0xFF1E1B2C);
-            context.fill(px + 12, py + 36, px + 12 + (int)(110 * (client.player.getHealth() / 20.0f)), py + 40, 0xFF7A3EE4);
+        // 1. Музыкальный плеер (как на референсе сверху слева)
+        if (Modules.musicBarEnabled) {
+            int w = 180, h = 65;
+            drawHudCard(context, Modules.musicBarX, Modules.musicBarY, w, h, "musicBar", inChat, mouseX, mouseY);
+            context.drawTextWithShadow(client.textRenderer, "§fAlien", Modules.musicBarX + 45, Modules.musicBarY + 10, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "§8@ilymeady", Modules.musicBarX + 45, Modules.musicBarY + 22, 0x888599);
+            // Полоса прогресса песни
+            context.fill(Modules.musicBarX + 12, Modules.musicBarY + 45, Modules.musicBarX + 168, Modules.musicBarY + 48, 0xFF221F30);
+            context.fill(Modules.musicBarX + 12, Modules.musicBarY + 45, Modules.musicBarX + 90, Modules.musicBarY + 48, 0xFF7A3EE4);
         }
 
-        // 2. Панель Зелий (Potions) как на референсе
+        // 2. Панель Зелий (Potions)
         if (Modules.potionsEnabled) {
-            int px = Modules.potionsX;
-            int py = Modules.potionsY;
-            int w = 135, h = 60;
-            drawHudCard(context, px, py, w, h, "potions", inChat, mouseX, mouseY);
-            context.drawTextWithShadow(client.textRenderer, "§bPotions", px + 10, py + 8, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "Strength II          ∞", px + 10, py + 24, 0xAAAAAA);
-            context.drawTextWithShadow(client.textRenderer, "Speed II           3:12", px + 10, py + 40, 0xAAAAAA);
+            int w = 145, h = 55;
+            drawHudCard(context, Modules.potionsX, Modules.potionsY, w, h, "potions", inChat, mouseX, mouseY);
+            context.drawTextWithShadow(client.textRenderer, "§bPotions", Modules.potionsX + 10, Modules.potionsY + 8, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "Strength II          ∞", Modules.potionsX + 10, Modules.potionsY + 24, 0xAAAAAA);
+            context.drawTextWithShadow(client.textRenderer, "Speed II           3:12", Modules.potionsX + 10, Modules.potionsY + 38, 0xAAAAAA);
         }
 
-        // 3. Панель Хоткеев (Hot Keys) справа
+        // 3. Блок игрока (Player Info со здоровьем и фиолетовой полоской)
+        if (Modules.playerInfo) {
+            int w = 145, h = 50;
+            drawHudCard(context, Modules.playerInfoX, Modules.playerInfoY, w, h, "playerInfo", inChat, mouseX, mouseY);
+            context.drawTextWithShadow(client.textRenderer, client.player.getName().getString(), Modules.playerInfoX + 12, Modules.playerInfoY + 8, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "HP / " + (int)client.player.getHealth(), Modules.playerInfoX + 12, Modules.playerInfoY + 22, 0x888599);
+            
+            context.fill(Modules.playerInfoX + 12, Modules.playerInfoY + 36, Modules.playerInfoX + 133, Modules.playerInfoY + 40, 0xFF1E1B2C);
+            context.fill(Modules.playerInfoX + 12, Modules.playerInfoY + 36, Modules.playerInfoX + 12 + (int)(121 * (client.player.getHealth() / 20.0f)), Modules.playerInfoY + 40, 0xFF7A3EE4);
+        }
+
+        // 4. Панель Хоткеев (выключена по умолчанию, бинды не навязаны)
         if (Modules.hotkeysEnabled) {
             int hx = Modules.hotkeysX < 0 ? width + Modules.hotkeysX : Modules.hotkeysX;
             int hy = Modules.hotkeysY;
-            int w = 140, h = 85;
+            int w = 140, h = 70;
             drawHudCard(context, hx, hy, w, h, "hotkeys", inChat, mouseX, mouseY);
             context.drawTextWithShadow(client.textRenderer, "⌨ Hot Keys", hx + 10, hy + 8, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "AutoFish          V", hx + 10, hy + 26, 0xAAAAAA);
-            context.drawTextWithShadow(client.textRenderer, "Brightness       H", hx + 10, hy + 42, 0xAAAAAA);
-            context.drawTextWithShadow(client.textRenderer, "HUD                 M", hx + 10, hy + 58, 0xAAAAAA);
-            context.drawTextWithShadow(client.textRenderer, "Music Bar        Q", hx + 10, hy + 74, 0xAAAAAA);
+            context.drawTextWithShadow(client.textRenderer, "FullBright       [none]", hx + 10, hy + 26, 0xAAAAAA);
+            context.drawTextWithShadow(client.textRenderer, "Visuals Menu   [none]", hx + 10, hy + 42, 0xAAAAAA);
         }
 
-        // 4. Аккуратный Армор-Худ вокруг хотбара снизу
+        // 5. Армор-худ (вокруг хотбара снизу)
         if (Modules.armorStatusEnabled) {
             int hotbarLeft = width / 2 - 91;
             int hotbarRight = width / 2 + 91;
@@ -98,8 +108,8 @@ public class HudRenderer {
     }
 
     private static void drawHudCard(DrawContext context, int x, int y, int w, int h, String id, boolean inChat, double mouseX, double mouseY) {
-        context.fill(x, y, x + w, y + h, 0xEE0B0B10);
-        context.drawBorder(x, y, w, h, inChat ? 0xFF7A3EE4 : 0xFF1C1A29);
+        context.fill(x, y, x + w, y + h, 0xEE0C0B12);
+        context.drawBorder(x, y, w, h, inChat ? 0xFF7A3EE4 : 0xFF242035); // В чате подсвечиваются рамки для перетаскивания
 
         if (inChat && !wasMousePressed) {
             MinecraftClient client = MinecraftClient.getInstance();
