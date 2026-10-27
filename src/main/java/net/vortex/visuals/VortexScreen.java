@@ -114,7 +114,6 @@ public class VortexScreen extends Screen {
                     case 3 -> Modules.potionsEnabled = !Modules.potionsEnabled;
                     case 4 -> Modules.cooldownsEnabled = !Modules.cooldownsEnabled;
                     case 5 -> Modules.keybindsEnabled = !Modules.keybindsEnabled;
-                    case 6 -> Modules.keystrokesEnabled = !Modules.keystrokesEnabled;
                     case 7 -> Modules.inventoryHudEnabled = !Modules.inventoryHudEnabled;
                 }
             }
@@ -271,7 +270,6 @@ public class VortexScreen extends Screen {
                 case 3 -> new Feature("Potions HUD", "Active effects and timers", Modules.potionsEnabled);
                 case 4 -> new Feature("Cooldown HUD", "Item cooldown indicators", Modules.cooldownsEnabled);
                 case 5 -> new Feature("Keybinds HUD", "Active keybinds", Modules.keybindsEnabled);
-                case 6 -> new Feature("Keystrokes HUD", "Keyboard display", Modules.keystrokesEnabled);
                 default -> new Feature("Inventory HUD", "Inventory preview", Modules.inventoryHudEnabled);
             };
             default -> new Feature("Unavailable", "No module", false);
