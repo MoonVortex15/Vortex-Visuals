@@ -55,8 +55,12 @@ public final class HudRenderer {
         props.setProperty("potionsY", String.valueOf(Modules.potionsY));
         props.setProperty("cooldownsX", String.valueOf(Modules.cooldownsX));
         props.setProperty("cooldownsY", String.valueOf(Modules.cooldownsY));
+        props.setProperty("keybindsX", String.valueOf(Modules.keybindsX));
+        props.setProperty("keybindsY", String.valueOf(Modules.keybindsY));
         props.setProperty("inventoryX", String.valueOf(Modules.inventoryX));
         props.setProperty("inventoryY", String.valueOf(Modules.inventoryY));
+        props.setProperty("armorX", String.valueOf(Modules.armorX));
+        props.setProperty("armorY", String.valueOf(Modules.armorY));
 
         props.setProperty("watermarkEnabled", String.valueOf(Modules.watermarkEnabled));
         props.setProperty("playerInfo", String.valueOf(Modules.playerInfo));
@@ -64,7 +68,6 @@ public final class HudRenderer {
         props.setProperty("potionsEnabled", String.valueOf(Modules.potionsEnabled));
         props.setProperty("cooldownsEnabled", String.valueOf(Modules.cooldownsEnabled));
         props.setProperty("keybindsEnabled", String.valueOf(Modules.keybindsEnabled));
-        props.setProperty("keystrokesEnabled", String.valueOf(Modules.keystrokesEnabled));
         props.setProperty("inventoryHudEnabled", String.valueOf(Modules.inventoryHudEnabled));
 
         props.setProperty("deathEffect", String.valueOf(Modules.deathEffect));
@@ -134,6 +137,13 @@ public final class HudRenderer {
 
         if (Modules.cooldownsEnabled)
             renderCooldowns(ctx, mc, editing, mx, my, pressed);
+
+        if (Modules.armorStatusEnabled)
+            renderArmor(ctx, mc, editing, mx, my, pressed);
+
+        if (Modules.keybindsEnabled)
+            renderKeybinds(ctx, mc, editing, mx, my, pressed);
+
 
         if (Modules.inventoryHudEnabled)
             renderInventory(ctx, mc, editing, mx, my, pressed);
@@ -464,6 +474,52 @@ public final class HudRenderer {
         }
     }
 
+
+    // ---------------- ARMOR HUD ----------------
+    private static void renderArmor(DrawContext c, MinecraftClient mc, boolean edit,
+            double mx, double my, boolean pressed) {
+        int x = Modules.armorX, y = Modules.armorY;
+        card(c, x, y, 94, 43, "armor", edit, mx, my, pressed);
+        c.drawText(mc.textRenderer, "ARMOR", x + 7, y + 4, 0xFFFFFFFF, false);
+        EquipmentSlot[] slots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
+        for (int i = 0; i < slots.length; i++) {
+            ItemStack stack = mc.player.getEquippedStack(slots[i]);
+            int sx = x + 7 + i * 20;
+            c.fill(sx, y + 16, sx + 18, y + 34, 0x99140F22);
+            if (!stack.isEmpty()) {
+                c.drawItem(stack, sx + 1, y + 16);
+                c.drawStackOverlay(mc.textRenderer, stack, sx + 1, y + 16);
+                int max = stack.getMaxDamage();
+                if (max > 0) {
+                    int remaining = max - stack.getDamage();
+                    int color = remaining > max * .5 ? 0xFF55FF55 : remaining > max * .2 ? 0xFFFFCC33 : 0xFFFF4444;
+                    c.fill(sx + 2, y + 35, sx + 16, y + 37, 0xFF30283A);
+                    c.fill(sx + 2, y + 35, sx + 2 + Math.max(0, 14 * remaining / max), y + 37, color);
+                }
+            }
+        }
+    }
+
+    // ---------------- KEYBINDS HUD ----------------
+    private static void renderKeybinds(DrawContext c, MinecraftClient mc, boolean edit,
+            double mx, double my, boolean pressed) {
+        int x = Modules.keybindsX, y = Modules.keybindsY;
+        List<String> active = new ArrayList<>();
+        if (mc.options.forwardKey.isPressed()) active.add("Forward");
+        if (mc.options.backKey.isPressed()) active.add("Back");
+        if (mc.options.leftKey.isPressed()) active.add("Left");
+        if (mc.options.rightKey.isPressed()) active.add("Right");
+        if (mc.options.jumpKey.isPressed()) active.add("Jump");
+        if (mc.options.sprintKey.isPressed()) active.add("Sprint");
+        if (mc.options.sneakKey.isPressed()) active.add("Sneak");
+        if (active.isEmpty() && !edit) return;
+        int rows = Math.max(1, active.size());
+        card(c, x, y, 126, 20 + rows * 12, "keybinds", edit, mx, my, pressed);
+        c.drawText(mc.textRenderer, "KEYBINDS", x + 7, y + 4, 0xFFFFFFFF, false);
+        if (active.isEmpty()) c.drawText(mc.textRenderer, "No active keys", x + 7, y + 17, 0xBFFFFFFF, false);
+        else for (int i = 0; i < active.size(); i++) c.drawText(mc.textRenderer, active.get(i), x + 7, y + 17 + i * 12, 0xEFFFFFFF, false);
+    }
+
     // ---------------- INVENTORY HUD ----------------
 
     private static void renderInventory(
@@ -475,19 +531,15 @@ public final class HudRenderer {
             boolean pressed
     ) {
 
+        int x = Modules.inventoryX;
+        int y = Modules.inventoryY;
+
         int cell = 18;
         int gap = 2;
         int padding = 6;
 
-        // Keep Inventory HUD visible on small/scaled screens.
-        int width = padding * 2 + 9 * cell + 8 * gap;
+        int width = 176;
         int height = 78;
-        int maxX = Math.max(0, mc.getWindow().getScaledWidth() - width);
-        int maxY = Math.max(0, mc.getWindow().getScaledHeight() - height);
-        int x = Math.max(0, Math.min(Modules.inventoryX, maxX));
-        int y = Math.max(0, Math.min(Modules.inventoryY, maxY));
-        Modules.inventoryX = x;
-        Modules.inventoryY = y;
 
         card(c,
                 x,
@@ -672,6 +724,14 @@ public final class HudRenderer {
             case "inventory" -> {
                 Modules.inventoryX = x;
                 Modules.inventoryY = y;
+            }
+            case "armor" -> {
+                Modules.armorX = x;
+                Modules.armorY = y;
+            }
+            case "keybinds" -> {
+                Modules.keybindsX = x;
+                Modules.keybindsY = y;
             }
         }
     }
