@@ -9,6 +9,9 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
 public class HudRenderer {
     private static String draggingElement = null;
     private static int dragOffsetX = 0;
@@ -30,7 +33,8 @@ public class HudRenderer {
             if (!isPressed) {
                 draggingElement = null;
             } else if (draggingElement != null) {
-                if (draggingElement.equals("playerInfo")) { Modules.playerInfoX = (int) mouseX - dragOffsetX; Modules.playerInfoY = (int) mouseY - dragOffsetY; }
+                if (draggingElement.equals("watermark")) { Modules.watermarkX = (int) mouseX - dragOffsetX; Modules.watermarkY = (int) mouseY - dragOffsetY; }
+                else if (draggingElement.equals("playerInfo")) { Modules.playerInfoX = (int) mouseX - dragOffsetX; Modules.playerInfoY = (int) mouseY - dragOffsetY; }
                 else if (draggingElement.equals("potions")) { Modules.potionsX = (int) mouseX - dragOffsetX; Modules.potionsY = (int) mouseY - dragOffsetY; }
                 else if (draggingElement.equals("cooldowns")) { Modules.cooldownsX = (int) mouseX - dragOffsetX; Modules.cooldownsY = (int) mouseY - dragOffsetY; }
                 else if (draggingElement.equals("keybinds")) { Modules.keybindsX = (int) mouseX - dragOffsetX; Modules.keybindsY = (int) mouseY - dragOffsetY; }
@@ -41,11 +45,21 @@ public class HudRenderer {
             draggingElement = null;
         }
 
+        // 0. Watermark
+        if (Modules.watermarkEnabled) {
+            String timeStr = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+            String wmText = "Portex Visuals | FPS: " + client.getCurrentFps() + " | Ping: 0ms | Time: " + timeStr;
+            int w = client.textRenderer.getWidth(wmText) + 16;
+            int h = 22;
+            drawCard(context, Modules.watermarkX, Modules.watermarkY, w, h, "watermark", inChat, mouseX, mouseY, isPressed);
+            context.drawTextWithShadow(client.textRenderer, wmText, Modules.watermarkX + 8, Modules.watermarkY + 7, 0xFFFFFF);
+        }
+
         // 1. Player Info
         if (Modules.playerInfo) {
             int w = 150, h = 50;
             drawCard(context, Modules.playerInfoX, Modules.playerInfoY, w, h, "playerInfo", inChat, mouseX, mouseY, isPressed);
-            context.drawTextWithShadow(client.textRenderer, "Vortex Visuals", Modules.playerInfoX + 10, Modules.playerInfoY + 8, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, client.player.getName().getString(), Modules.playerInfoX + 10, Modules.playerInfoY + 8, 0xFFFFFF);
             context.drawTextWithShadow(client.textRenderer, "HP: " + (int)client.player.getHealth() + " (+16)", Modules.playerInfoX + 10, Modules.playerInfoY + 20, 0x888599);
             context.fill(Modules.playerInfoX + 10, Modules.playerInfoY + 34, Modules.playerInfoX + 140, Modules.playerInfoY + 38, 0xFF1E1B2C);
             context.fill(Modules.playerInfoX + 10, Modules.playerInfoY + 34, Modules.playerInfoX + 10 + (int)(130 * (client.player.getHealth() / 20.0f)), Modules.playerInfoY + 38, 0xFF7A3EE4);
@@ -53,12 +67,11 @@ public class HudRenderer {
 
         // 2. Potions
         if (Modules.potionsEnabled) {
-            int w = 150, h = 75;
+            int w = 150, h = 65;
             drawCard(context, Modules.potionsX, Modules.potionsY, w, h, "potions", inChat, mouseX, mouseY, isPressed);
             context.drawTextWithShadow(client.textRenderer, "Potions", Modules.potionsX + 10, Modules.potionsY + 8, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "Сопротивление  04:52", Modules.potionsX + 10, Modules.potionsY + 24, 0xAAAAAA);
-            context.drawTextWithShadow(client.textRenderer, "Регенерация 2  00:12", Modules.potionsX + 10, Modules.potionsY + 38, 0xAAAAAA);
-            context.drawTextWithShadow(client.textRenderer, "Огнестойкость  04:52", Modules.potionsX + 10, Modules.potionsY + 52, 0xAAAAAA);
+            context.drawTextWithShadow(client.textRenderer, "Регенерация 2  00:12", Modules.potionsX + 10, Modules.potionsY + 24, 0xAAAAAA);
+            context.drawTextWithShadow(client.textRenderer, "Огнестойкость  04:52", Modules.potionsX + 10, Modules.potionsY + 38, 0xAAAAAA);
         }
 
         // 3. Cooldowns
@@ -94,9 +107,8 @@ public class HudRenderer {
         if (Modules.inventoryHudEnabled) {
             int ix = Modules.inventoryX;
             int iy = Modules.inventoryY;
-            drawCard(context, ix, iy, 180, 70, "inventory", inChat, mouseX, mouseY, isPressed);
-            context.drawTextWithShadow(client.textRenderer, "📌 Inventory", ix + 10, ix + 8, 0xFFFFFF);
-            // Тут отображаются слоты мини-инвентаря
+            drawCard(context, ix, iy, 180, 60, "inventory", inChat, mouseX, mouseY, isPressed);
+            context.drawTextWithShadow(client.textRenderer, "Inventory Preview", ix + 10, iy + 8, 0xFFFFFF);
         }
 
         // 7. Армор-статус вокруг хотбара
@@ -113,7 +125,8 @@ public class HudRenderer {
     }
 
     private static void drawCard(DrawContext context, int x, int y, int w, int h, String id, boolean inChat, double mouseX, double mouseY, boolean isPressed) {
-        context.fill(x, y, x + w, y + h, 0xFF0E0D14);
+        // Плавная полупрозрачная тёмная подложка вместо убогих майнкрафтовских квадратов
+        context.fill(x, y, x + w, y + h, 0xCC0E0D14);
         context.drawBorder(x, y, w, h, inChat ? 0xFF7A3EE4 : 0xFF242035);
 
         if (inChat && isPressed && draggingElement == null) {
@@ -130,7 +143,7 @@ public class HudRenderer {
     }
 
     private static void drawKey(DrawContext context, MinecraftClient client, String text, int x, int y, int w, int h) {
-        context.fill(x, y, x + w, y + h, 0xFF191722);
+        context.fill(x, y, x + w, y + h, 0xCC191722);
         context.drawBorder(x, y, w, h, 0xFF2A263B);
         context.drawCenteredTextWithShadow(client.textRenderer, text, x + w / 2, y + (h - 8) / 2, 0xFFFFFF);
     }
