@@ -2,6 +2,7 @@
 package net.vortex.visuals;
 
 import net.minecraft.client.gui.DrawContext;
+import net.vortex.visuals.hud.HudRenderer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 
@@ -58,6 +59,7 @@ public class VortexScreen extends Screen {
             int cy = y + i * (h + gap);
             if (inside(mouseX, mouseY, x, cy, w, h)) {
                 toggleFeature(i);
+                HudRenderer.saveConfig();
                 return true;
             }
         }
@@ -241,7 +243,9 @@ public class VortexScreen extends Screen {
 
             drawToggle(c, contentX + cardW - 38,
                     y + 9, feature.enabled);
-          }
+        }
+
+        super.render(c, mouseX, mouseY, delta);
     }
 
     private record Feature(String name, String description,
