@@ -241,6 +241,7 @@ public class VortexScreen extends Screen {
 
             drawToggle(c, contentX + cardW - 38,
                     y + 9, feature.enabled);
+          }
     }
 
     private record Feature(String name, String description,
