@@ -1,5 +1,6 @@
-package net.vortex.visuals;
+package net.vortex.visuals.hud;
 
+import net.vortex.visuals.Modules;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ChatScreen;
@@ -21,7 +22,6 @@ public class HudRenderer {
         int height = client.getWindow().getScaledHeight();
         boolean inChat = client.currentScreen instanceof ChatScreen;
 
-        // Точный расчет координат мыши под размер окна игры
         double mouseX = client.mouse.getX() * (double) client.getWindow().getScaledWidth() / (double) client.getWindow().getWidth();
         double mouseY = client.mouse.getY() * (double) client.getWindow().getScaledHeight() / (double) client.getWindow().getHeight();
         boolean isPressed = GLFW.glfwGetMouseButton(client.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
@@ -30,64 +30,76 @@ public class HudRenderer {
             if (!isPressed) {
                 draggingElement = null;
             } else if (draggingElement != null) {
-                if (draggingElement.equals("potions")) {
-                    Modules.potionsX = (int) mouseX - dragOffsetX;
-                    Modules.potionsY = (int) mouseY - dragOffsetY;
-                } else if (draggingElement.equals("playerInfo")) {
-                    Modules.playerInfoX = (int) mouseX - dragOffsetX;
-                    Modules.playerInfoY = (int) mouseY - dragOffsetY;
-                } else if (draggingElement.equals("cooldowns")) {
-                    Modules.cooldownsX = (int) mouseX - dragOffsetX;
-                    Modules.cooldownsY = (int) mouseY - dragOffsetY;
-                } else if (draggingElement.equals("hotkeys")) {
-                    Modules.hotkeysX = (int) mouseX - dragOffsetX;
-                    Modules.hotkeysY = (int) mouseY - dragOffsetY;
-                }
+                if (draggingElement.equals("playerInfo")) { Modules.playerInfoX = (int) mouseX - dragOffsetX; Modules.playerInfoY = (int) mouseY - dragOffsetY; }
+                else if (draggingElement.equals("potions")) { Modules.potionsX = (int) mouseX - dragOffsetX; Modules.potionsY = (int) mouseY - dragOffsetY; }
+                else if (draggingElement.equals("cooldowns")) { Modules.cooldownsX = (int) mouseX - dragOffsetX; Modules.cooldownsY = (int) mouseY - dragOffsetY; }
+                else if (draggingElement.equals("keybinds")) { Modules.keybindsX = (int) mouseX - dragOffsetX; Modules.keybindsY = (int) mouseY - dragOffsetY; }
+                else if (draggingElement.equals("keystrokes")) { Modules.keystrokesX = (int) mouseX - dragOffsetX; Modules.keystrokesY = (int) mouseY - dragOffsetY; }
+                else if (draggingElement.equals("inventory")) { Modules.inventoryX = (int) mouseX - dragOffsetX; Modules.inventoryY = (int) mouseY - dragOffsetY; }
             }
         } else {
             draggingElement = null;
         }
 
-        // 1. Панель Зелий
-        if (Modules.potionsEnabled) {
-            int w = 145, h = 55;
-            drawHudCard(context, Modules.potionsX, Modules.potionsY, w, h, "potions", inChat, mouseX, mouseY, isPressed);
-            context.drawTextWithShadow(client.textRenderer, "§bPotions", Modules.potionsX + 10, Modules.potionsY + 8, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "Strength II          ∞", Modules.potionsX + 10, Modules.potionsY + 24, 0xAAAAAA);
-            context.drawTextWithShadow(client.textRenderer, "Speed II           3:12", Modules.potionsX + 10, Modules.potionsY + 38, 0xAAAAAA);
-        }
-
-        // 2. Блок игрока (Player Info со здоровьем и фиолетовой полоской)
+        // 1. Player Info
         if (Modules.playerInfo) {
-            int w = 145, h = 50;
-            drawHudCard(context, Modules.playerInfoX, Modules.playerInfoY, w, h, "playerInfo", inChat, mouseX, mouseY, isPressed);
-            context.drawTextWithShadow(client.textRenderer, client.player.getName().getString(), Modules.playerInfoX + 12, Modules.playerInfoY + 8, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "HP / " + (int)client.player.getHealth(), Modules.playerInfoX + 12, Modules.playerInfoY + 22, 0x888599);
-            
-            context.fill(Modules.playerInfoX + 12, Modules.playerInfoY + 36, Modules.playerInfoX + 133, Modules.playerInfoY + 40, 0xFF1E1B2C);
-            context.fill(Modules.playerInfoX + 12, Modules.playerInfoY + 36, Modules.playerInfoX + 12 + (int)(121 * (client.player.getHealth() / 20.0f)), Modules.playerInfoY + 40, 0xFF7A3EE4);
+            int w = 150, h = 50;
+            drawCard(context, Modules.playerInfoX, Modules.playerInfoY, w, h, "playerInfo", inChat, mouseX, mouseY, isPressed);
+            context.drawTextWithShadow(client.textRenderer, "Vortex Visuals", Modules.playerInfoX + 10, Modules.playerInfoY + 8, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "HP: " + (int)client.player.getHealth() + " (+16)", Modules.playerInfoX + 10, Modules.playerInfoY + 20, 0x888599);
+            context.fill(Modules.playerInfoX + 10, Modules.playerInfoY + 34, Modules.playerInfoX + 140, Modules.playerInfoY + 38, 0xFF1E1B2C);
+            context.fill(Modules.playerInfoX + 10, Modules.playerInfoY + 34, Modules.playerInfoX + 10 + (int)(130 * (client.player.getHealth() / 20.0f)), Modules.playerInfoY + 38, 0xFF7A3EE4);
         }
 
-        // 3. Панель Кулдаунов (Cooldowns)
+        // 2. Potions
+        if (Modules.potionsEnabled) {
+            int w = 150, h = 75;
+            drawCard(context, Modules.potionsX, Modules.potionsY, w, h, "potions", inChat, mouseX, mouseY, isPressed);
+            context.drawTextWithShadow(client.textRenderer, "Potions", Modules.potionsX + 10, Modules.potionsY + 8, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "Сопротивление  04:52", Modules.potionsX + 10, Modules.potionsY + 24, 0xAAAAAA);
+            context.drawTextWithShadow(client.textRenderer, "Регенерация 2  00:12", Modules.potionsX + 10, Modules.potionsY + 38, 0xAAAAAA);
+            context.drawTextWithShadow(client.textRenderer, "Огнестойкость  04:52", Modules.potionsX + 10, Modules.potionsY + 52, 0xAAAAAA);
+        }
+
+        // 3. Cooldowns
         if (Modules.cooldownsEnabled) {
-            int w = 135, h = 35;
-            drawHudCard(context, Modules.cooldownsX, Modules.cooldownsY, w, h, "cooldowns", inChat, mouseX, mouseY, isPressed);
-            context.drawTextWithShadow(client.textRenderer, "§bCooldowns", Modules.cooldownsX + 10, Modules.cooldownsY + 8, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "Potion          ∞", Modules.cooldownsX + 10, Modules.cooldownsY + 20, 0xAAAAAA);
+            int w = 150, h = 45;
+            drawCard(context, Modules.cooldownsX, Modules.cooldownsY, w, h, "cooldowns", inChat, mouseX, mouseY, isPressed);
+            context.drawTextWithShadow(client.textRenderer, "CoolDowns", Modules.cooldownsX + 10, Modules.cooldownsY + 8, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "Козий рог        5.0s", Modules.cooldownsX + 10, Modules.cooldownsY + 24, 0xAAAAAA);
         }
 
-        // 4. Панель Хоткеев (без дефолтных биндов)
-        if (Modules.hotkeysEnabled) {
-            int hx = Modules.hotkeysX < 0 ? width + Modules.hotkeysX : Modules.hotkeysX;
-            int hy = Modules.hotkeysY;
-            int w = 140, h = 70;
-            drawHudCard(context, hx, hy, w, h, "hotkeys", inChat, mouseX, mouseY, isPressed);
-            context.drawTextWithShadow(client.textRenderer, "⌨ Hot Keys", hx + 10, hy + 8, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "FullBright       [none]", hx + 10, hy + 26, 0xAAAAAA);
-            context.drawTextWithShadow(client.textRenderer, "Visuals Menu   [none]", hx + 10, hy + 42, 0xAAAAAA);
+        // 4. Keybinds
+        if (Modules.keybindsEnabled) {
+            int w = 150, h = 45;
+            drawCard(context, Modules.keybindsX, Modules.keybindsY, w, h, "keybinds", inChat, mouseX, mouseY, isPressed);
+            context.drawTextWithShadow(client.textRenderer, "Keybinds", Modules.keybindsX + 10, Modules.keybindsY + 8, 0xFFFFFF);
+            context.drawTextWithShadow(client.textRenderer, "Hit Effect     [MB3]", Modules.keybindsX + 10, Modules.keybindsY + 24, 0xAAAAAA);
         }
 
-        // 5. Армор-худ (вокруг хотбара снизу)
+        // 5. Keystrokes (WASD)
+        if (Modules.keystrokesEnabled) {
+            int kx = Modules.keystrokesX;
+            int ky = Modules.keystrokesY;
+            drawCard(context, kx, ky, 120, 95, "keystrokes", inChat, mouseX, mouseY, isPressed);
+            drawKey(context, client, "W", kx + 44, ky + 10);
+            drawKey(context, client, "A", kx + 12, ky + 42);
+            drawKey(context, client, "S", kx + 44, ky + 42);
+            drawKey(context, client, "D", kx + 76, ky + 42);
+            drawKey(context, client, "LMB", kx + 12, ky + 72, 50, 16);
+            drawKey(context, client, "RMB", kx + 64, ky + 72, 50, 16);
+        }
+
+        // 6. Inventory HUD
+        if (Modules.inventoryHudEnabled) {
+            int ix = Modules.inventoryX;
+            int iy = Modules.inventoryY;
+            drawCard(context, ix, iy, 180, 70, "inventory", inChat, mouseX, mouseY, isPressed);
+            context.drawTextWithShadow(client.textRenderer, "📌 Inventory", ix + 10, ix + 8, 0xFFFFFF);
+            // Тут отображаются слоты мини-инвентаря
+        }
+
+        // 7. Армор-статус вокруг хотбара
         if (Modules.armorStatusEnabled) {
             int hotbarLeft = width / 2 - 91;
             int hotbarRight = width / 2 + 91;
@@ -100,8 +112,8 @@ public class HudRenderer {
         }
     }
 
-    private static void drawHudCard(DrawContext context, int x, int y, int w, int h, String id, boolean inChat, double mouseX, double mouseY, boolean isPressed) {
-        context.fill(x, y, x + w, y + h, 0xFF0C0B12);
+    private static void drawCard(DrawContext context, int x, int y, int w, int h, String id, boolean inChat, double mouseX, double mouseY, boolean isPressed) {
+        context.fill(x, y, x + w, y + h, 0xFF0E0D14);
         context.drawBorder(x, y, w, h, inChat ? 0xFF7A3EE4 : 0xFF242035);
 
         if (inChat && isPressed && draggingElement == null) {
@@ -111,6 +123,16 @@ public class HudRenderer {
                 dragOffsetY = (int) mouseY - y;
             }
         }
+    }
+
+    private static void drawKey(DrawContext context, MinecraftClient client, String text, int x, int y) {
+        drawKey(context, client, text, x, y, 28, 28);
+    }
+
+    private static void drawKey(DrawContext context, MinecraftClient client, String text, int x, int y, int w, int h) {
+        context.fill(x, y, x + w, y + h, 0xFF191722);
+        context.drawBorder(x, y, w, h, 0xFF2A263B);
+        context.drawCenteredTextWithShadow(client.textRenderer, text, x + w / 2, y + (h - 8) / 2, 0xFFFFFF);
     }
 
     private static void renderArmorItem(DrawContext context, MinecraftClient client, ItemStack stack, int x, int y) {
