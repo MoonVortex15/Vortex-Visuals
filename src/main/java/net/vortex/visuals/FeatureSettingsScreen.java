@@ -30,19 +30,8 @@ public class FeatureSettingsScreen extends Screen {
                         button.setMessage(Text.literal("Mode: " + Modules.timeMode));
                     }
             ).dimensions(centerX - 100, centerY - 20, 200, 20).build());
-        } else if (featureName.equals("Hit Color")) {
-            this.addDrawableChild(ButtonWidget.builder(
-                    Text.literal("Switch Color Preset"),
-                    button -> {
-                        if (Modules.hitColorRgb == 0xFF5555) Modules.hitColorRgb = 0x55FF55;
-                        else if (Modules.hitColorRgb == 0x55FF55) Modules.hitColorRgb = 0x5555FF;
-                        else Modules.hitColorRgb = 0xFF5555;
-                        button.setMessage(Text.literal("Color Preset Active"));
-                    }
-            ).dimensions(centerX - 100, centerY - 20, 200, 20).build());
         }
 
-        // Кнопка возврата назад
         this.addDrawableChild(ButtonWidget.builder(
                 Text.literal("Back"),
                 button -> this.client.setScreen(parent)
