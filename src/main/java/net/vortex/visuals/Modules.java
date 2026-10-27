@@ -52,4 +52,6 @@ public class Modules {
 
     public static int inventoryX = 380;
     public static int inventoryY = 520;
+    public static int armorX = 30;
+    public static int armorY = 300;
 }
