@@ -303,6 +303,52 @@ public class VortexScreen extends Screen {
         super.render(c, mouseX, mouseY, delta);
     }
 
+    private void renderModuleSettings(DrawContext c) {
+        if (currentCategory != Category.HUD || settingsFeature < 0 || settingsFeature >= getFeatureCount()) {
+            c.drawTextWithShadow(textRenderer, "No settings available for this module yet",
+                    panelX + 152, panelY + 88, MUTED);
+            return;
+        }
+
+        Feature feature = getFeature(settingsFeature);
+        c.drawTextWithShadow(textRenderer, feature.name + " Settings",
+                panelX + 152, panelY + 70, TEXT);
+        c.drawTextWithShadow(textRenderer, "Drag the sliders to move this HUD",
+                panelX + 152, panelY + 88, MUTED);
+
+        int x = panelX + 166;
+        int w = panelW - 198;
+        int yX = panelY + 126;
+        int yY = panelY + 190;
+        int vx = getHudCoordinate(settingsFeature, 0);
+        int vy = getHudCoordinate(settingsFeature, 1);
+        drawCoordinateSlider(c, "X", x, yX, w, vx);
+        drawCoordinateSlider(c, "Y", x, yY, w, vy);
+        c.drawTextWithShadow(textRenderer, "Right-click outside the sliders or press X to close",
+                panelX + 152, panelY + panelH - 28, MUTED);
+    }
+
+    private int getHudCoordinate(int feature, int axis) {
+        return switch (feature) {
+            case 0 -> axis == 0 ? Modules.watermarkX : Modules.watermarkY;
+            case 1 -> axis == 0 ? Modules.playerInfoX : Modules.playerInfoY;
+            case 2 -> axis == 0 ? Modules.armorX : Modules.armorY;
+            case 3 -> axis == 0 ? Modules.potionsX : Modules.potionsY;
+            case 4 -> axis == 0 ? Modules.cooldownsX : Modules.cooldownsY;
+            case 5 -> axis == 0 ? Modules.keybindsX : Modules.keybindsY;
+            case 6 -> axis == 0 ? Modules.inventoryX : Modules.inventoryY;
+            default -> 0;
+        };
+    }
+
+    private void drawCoordinateSlider(DrawContext c, String label, int x, int y, int w, int value) {
+        c.drawTextWithShadow(textRenderer, label + "  " + value, panelX + 152, y - 18, TEXT);
+        c.fill(x, y, x + w, y + 8, 0xFF30243F);
+        c.fill(x, y, x + (int)(w * Math.max(0, Math.min(600, value)) / 600.0), y + 8, PURPLE);
+        int knobX = x + (int)(w * Math.max(0, Math.min(600, value)) / 600.0);
+        c.fill(knobX - 3, y - 3, knobX + 4, y + 11, 0xFFF5EEFF);
+    }
+
     private record Feature(String name, String description,
                            boolean enabled) {}
 
