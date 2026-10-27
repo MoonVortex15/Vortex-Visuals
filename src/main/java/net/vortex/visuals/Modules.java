@@ -20,6 +20,10 @@ public class Modules {
     public static boolean particles = true;
     public static boolean renderTweaks = true;
 
+    // Time Changer (исправляет ошибку компиляции)
+    public static boolean timeChanger = false;
+    public static String timeMode = "Day";
+
     // HUD элементы (каждый можно независимо включать/выключать)
     public static boolean watermarkEnabled = true;
     public static boolean playerInfo = true;
