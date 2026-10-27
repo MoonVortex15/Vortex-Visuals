@@ -109,6 +109,15 @@ public final class HudRenderer {
         props.setProperty("crosshairGreen", String.valueOf(Modules.crosshairGreen));
         props.setProperty("crosshairBlue", String.valueOf(Modules.crosshairBlue));
         props.setProperty("crosshairCenterDot", String.valueOf(Modules.crosshairCenterDot));
+        props.setProperty("blockOverlayEnabled", String.valueOf(Modules.blockOverlayEnabled));
+        props.setProperty("blockOverlayFillRed", String.valueOf(Modules.blockOverlayFillRed));
+        props.setProperty("blockOverlayFillGreen", String.valueOf(Modules.blockOverlayFillGreen));
+        props.setProperty("blockOverlayFillBlue", String.valueOf(Modules.blockOverlayFillBlue));
+        props.setProperty("blockOverlayOutlineRed", String.valueOf(Modules.blockOverlayOutlineRed));
+        props.setProperty("blockOverlayOutlineGreen", String.valueOf(Modules.blockOverlayOutlineGreen));
+        props.setProperty("blockOverlayOutlineBlue", String.valueOf(Modules.blockOverlayOutlineBlue));
+        props.setProperty("blockOverlayAlpha", String.valueOf(Modules.blockOverlayAlpha));
+        props.setProperty("blockOverlayLineWidth", String.valueOf(Modules.blockOverlayLineWidth));
 
         try {
             Files.createDirectories(path.getParent());
