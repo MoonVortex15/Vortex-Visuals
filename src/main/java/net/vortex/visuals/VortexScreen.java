@@ -6,7 +6,7 @@ import net.minecraft.text.Text;
 
 public class VortexScreen extends Screen {
     private enum Category { COMBAT, VISUALS, HUD, UTILITIES, SETTINGS }
-    private Category currentCategory = Category.COMBAT;
+    private Category currentCategory = Category.HUD;
 
     public VortexScreen() {
         super(Text.literal("Vortex Visuals"));
@@ -34,7 +34,7 @@ public class VortexScreen extends Screen {
             if (mouseY >= catY + 100 && mouseY <= catY + 120) { currentCategory = Category.SETTINGS; return true; }
         }
 
-        // Клик по карточкам функций в правой части
+        // Клик по карточкам функций
         int startX = panelX + 135;
         int startY = panelY + 75;
         int cardW = 330;
@@ -46,64 +46,68 @@ public class VortexScreen extends Screen {
             if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 2)) Modules.hitSound = !Modules.hitSound;
             if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 3)) Modules.deathSound = !Modules.deathSound;
             if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 4)) Modules.targetEsp = !Modules.targetEsp;
+        } else if (currentCategory == Category.VISUALS) {
+            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 0)) Modules.fullBright = !Modules.fullBright;
+            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 1)) Modules.particles = !Modules.particles;
         } else if (currentCategory == Category.HUD) {
-            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 0)) Modules.playerInfo = !Modules.playerInfo;
-            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 1)) Modules.potionsEnabled = !Modules.potionsEnabled;
-            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 2)) Modules.cooldownsEnabled = !Modules.cooldownsEnabled;
-            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 3)) Modules.keybindsEnabled = !Modules.keybindsEnabled;
-            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 4)) Modules.keystrokesEnabled = !Modules.keystrokesEnabled;
-            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 5)) Modules.inventoryHudEnabled = !Modules.inventoryHudEnabled;
+            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 0)) Modules.watermarkEnabled = !Modules.watermarkEnabled;
+            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 1)) Modules.playerInfo = !Modules.playerInfo;
+            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 2)) Modules.potionsEnabled = !Modules.potionsEnabled;
+            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 3)) Modules.cooldownsEnabled = !Modules.cooldownsEnabled;
+            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 4)) Modules.keybindsEnabled = !Modules.keybindsEnabled;
+            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 5)) Modules.keystrokesEnabled = !Modules.keystrokesEnabled;
+            if (checkCard(mouseX, mouseY, startX, startY, cardW, cardH, 6)) Modules.inventoryHudEnabled = !Modules.inventoryHudEnabled;
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
     private boolean checkCard(double mx, double my, int startX, int startY, int w, int h, int index) {
-        int y = startY + index * (h + 8);
+        int y = startY + index * (h + 6);
         return mx >= startX && mx <= startX + w && my >= y && my <= y + h;
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.fill(0, 0, this.width, this.height, 0x90000000);
+        // Полупрозрачный фон экрана настроек
+        context.fill(0, 0, this.width, this.height, 0x80000000);
 
         int panelW = 480;
-        int panelH = 320;
+        int panelH = 340;
         int panelX = (this.width - panelW) / 2;
         int panelY = (this.height - panelH) / 2;
 
         // Основное окно с закругленным стилем
-        context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xFF121118);
+        context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xEE121118);
         context.drawBorder(panelX, panelY, panelW, panelH, 0xFF2A263B);
 
-        // Левая панель с логотипом
-        context.fill(panelX, panelY, panelX + 125, panelY + panelH, 0xFF0D0C12);
-        context.drawTextWithShadow(this.textRenderer, "P", panelX + 20, panelY + 22, 0xFFFFFF);
-        context.drawTextWithShadow(this.textRenderer, "Vortex", panelX + 36, panelY + 18, 0xFFFFFF);
-        context.drawTextWithShadow(this.textRenderer, "1.1.1", panelX + 36, panelY + 30, 0x777588);
+        // Левая панель
+        context.fill(panelX, panelY, panelX + 125, panelY + panelH, 0xFFA0C0D16);
+        context.drawTextWithShadow(this.textRenderer, "V", panelX + 18, panelY + 20, 0x7A3EE4);
+        context.drawTextWithShadow(this.textRenderer, "Vortex", panelX + 34, panelY + 18, 0xFFFFFF);
+        context.drawTextWithShadow(this.textRenderer, "1.1.1", panelX + 34, panelY + 30, 0x777588);
 
-        // Категории слева
-        int catY = panelY + 110;
+        // Категории
+        int catY = panelY + 100;
         drawCategoryButton(context, "⚔ Бой", panelX + 15, catY, currentCategory == Category.COMBAT);
         drawCategoryButton(context, "🎨 Визуалы", panelX + 15, catY + 25, currentCategory == Category.VISUALS);
         drawCategoryButton(context, "🖥️ Интерфейс", panelX + 15, catY + 50, currentCategory == Category.HUD);
         drawCategoryButton(context, "⚙️ Утилиты", panelX + 15, catY + 75, currentCategory == Category.UTILITIES);
         drawCategoryButton(context, "🔧 Настройки", panelX + 15, catY + 100, currentCategory == Category.SETTINGS);
 
-        // Поиск сверху справа
+        // Поиск
         int searchX = panelX + 280;
         int searchY = panelY + 18;
         context.fill(searchX, searchY, searchX + 180, searchY + 24, 0xFF191722);
         context.drawTextWithShadow(this.textRenderer, "🔍 Поиск...", searchX + 10, searchY + 8, 0x666375);
 
-        // Название категории справа
         String catTitle = currentCategory == Category.COMBAT ? "Бой" : (currentCategory == Category.HUD ? "Интерфейс HUD" : "Визуальные модули");
         context.drawTextWithShadow(this.textRenderer, "Категория: " + catTitle, panelX + 135, panelY + 24, 0xFFFFFF);
 
         int startX = panelX + 135;
-        int startY = panelY + 75;
+        int startY = panelY + 65;
         int cardW = 330;
-        int cardH = 42;
+        int cardH = 36;
 
         if (currentCategory == Category.COMBAT) {
             drawFeatureCard(context, "Death Effect", "Эффект при убийстве врага.", Modules.deathEffect, startX, startY, 0, cardW, cardH);
@@ -111,13 +115,17 @@ public class VortexScreen extends Screen {
             drawFeatureCard(context, "Hit Sound", "Звук при попадании по цели.", Modules.hitSound, startX, startY, 2, cardW, cardH);
             drawFeatureCard(context, "Death Sound", "Звук при вашей смерти.", Modules.deathSound, startX, startY, 3, cardW, cardH);
             drawFeatureCard(context, "Target ESP", "Подсвечивает текущую цель.", Modules.targetEsp, startX, startY, 4, cardW, cardH);
+        } else if (currentCategory == Category.VISUALS) {
+            drawFeatureCard(context, "Full Bright", "Максимальная яркость мира.", Modules.fullBright, startX, startY, 0, cardW, cardH);
+            drawFeatureCard(context, "Particles", "Кастомные частицы.", Modules.particles, startX, startY, 1, cardW, cardH);
         } else if (currentCategory == Category.HUD) {
-            drawFeatureCard(context, "Player Info", "Отображение HP и ника игрока.", Modules.playerInfo, startX, startY, 0, cardW, cardH);
-            drawFeatureCard(context, "Potions HUD", "Список активных зелий и эффектов.", Modules.potionsEnabled, startX, startY, 1, cardW, cardH);
-            drawFeatureCard(context, "Cooldowns", "Таймеры кулдаунов предметов.", Modules.cooldownsEnabled, startX, startY, 2, cardW, cardH);
-            drawFeatureCard(context, "Keybinds", "Панель активных биндов.", Modules.keybindsEnabled, startX, startY, 3, cardW, cardH);
-            drawFeatureCard(context, "Keystrokes", "Отображение нажатий WASD и мыши.", Modules.keystrokesEnabled, startX, startY, 4, cardW, cardH);
-            drawFeatureCard(context, "Inventory HUD", "Мини-инвентарь на экране.", Modules.inventoryHudEnabled, startX, startY, 5, cardW, cardH);
+            drawFeatureCard(context, "Watermark", "Отображение вотермарки сверху.", Modules.watermarkEnabled, startX, startY, 0, cardW, cardH);
+            drawFeatureCard(context, "Player Info", "HP, ник и полоска здоровья.", Modules.playerInfo, startX, startY, 1, cardW, cardH);
+            drawFeatureCard(context, "Potions HUD", "Список активных зелий.", Modules.potionsEnabled, startX, startY, 2, cardW, cardH);
+            drawFeatureCard(context, "Cooldowns", "Таймеры кулдаунов.", Modules.cooldownsEnabled, startX, startY, 3, cardW, cardH);
+            drawFeatureCard(context, "Keybinds", "Панель активных биндов.", Modules.keybindsEnabled, startX, startY, 4, cardW, cardH);
+            drawFeatureCard(context, "Keystrokes", "Отображение клавиш WASD.", Modules.keystrokesEnabled, startX, startY, 5, cardW, cardH);
+            drawFeatureCard(context, "Inventory HUD", "Мини-инвентарь на экране.", Modules.inventoryHudEnabled, startX, startY, 6, cardW, cardH);
         }
     }
 
@@ -129,13 +137,13 @@ public class VortexScreen extends Screen {
     }
 
     private void drawFeatureCard(DrawContext context, String title, String desc, boolean state, int startX, int startY, int index, int w, int h) {
-        int y = startY + index * (h + 8);
+        int y = startY + index * (h + 6);
         context.fill(startX, y, startX + w, y + h, 0xFF191722);
 
-        context.drawTextWithShadow(this.textRenderer, title, startX + 12, y + 8, 0xFFFFFFFF);
-        context.drawTextWithShadow(this.textRenderer, desc, startX + 12, y + 22, 0x777588);
+        context.drawTextWithShadow(this.textRenderer, title, startX + 12, y + 6, 0xFFFFFF);
+        context.drawTextWithShadow(this.textRenderer, desc, startX + 12, y + 18, 0x777588);
 
-        // Тумблер
+        // Стильный фиолетовый тумблер
         int tw = 32, th = 16;
         int tx = startX + w - tw - 12;
         int ty = y + (h - th) / 2;
