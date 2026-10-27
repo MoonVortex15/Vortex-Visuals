@@ -1,36 +1,37 @@
+
 package net.vortex.visuals;
 
 public class Modules {
     // Бой
     public static boolean deathEffect = false;
     public static boolean killEffect = false;
-    public static boolean hitSound = true;
+    public static boolean hitSound = false;
     public static boolean deathSound = false;
-    public static boolean targetEsp = true;
+    public static boolean targetEsp = false;
     public static boolean autoShift = false;
 
     // Визуалы
-    public static boolean chinaHit = true;
-    public static boolean customHand = true;
-    public static boolean fullBright = true;
+    public static boolean chinaHit = false;
+    public static boolean customHand = false;
+    public static boolean fullBright = false;
     public static boolean hitColor = false;
     public static int hitColorRgb = 0xFF5555;
     public static boolean hitboxCustomizer = false;
     public static boolean jumpCircles = false;
-    public static boolean particles = true;
-    public static boolean renderTweaks = true;
+    public static boolean particles = false;
+    public static boolean renderTweaks = false;
 
-    // HUD элементы (каждый можно независимо включать/выключать)
-    public static boolean watermarkEnabled = true;
-    public static boolean playerInfo = true;
-    public static boolean armorStatusEnabled = true;
-    public static boolean potionsEnabled = true;
-    public static boolean cooldownsEnabled = true;
-    public static boolean keybindsEnabled = true;
-    public static boolean keystrokesEnabled = true;
-    public static boolean inventoryHudEnabled = true;
+    // HUD
+    public static boolean watermarkEnabled = false;
+    public static boolean playerInfo = false;
+    public static boolean armorStatusEnabled = false;
+    public static boolean potionsEnabled = false;
+    public static boolean cooldownsEnabled = false;
+    public static boolean keybindsEnabled = false;
+    public static boolean keystrokesEnabled = false;
+    public static boolean inventoryHudEnabled = false;
 
-    // Координаты для свободного перетаскивания в чате
+    // Позиции HUD
     public static int watermarkX = 10;
     public static int watermarkY = 10;
 
