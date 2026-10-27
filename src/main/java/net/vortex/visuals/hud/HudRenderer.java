@@ -15,10 +15,15 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import org.lwjgl.glfw.GLFW;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public final class HudRenderer {
 
@@ -32,6 +37,59 @@ public final class HudRenderer {
     public static void setTarget(PlayerEntity target) {
         lastTarget = target;
         targetExpiresAt = System.currentTimeMillis() + TARGET_DURATION_MS;
+    }
+
+    /** Saves current HUD positions and module toggles to the config directory. */
+    public static void saveConfig() {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        Path path = mc.runDirectory.toPath()
+                .resolve("config")
+                .resolve("vortex-visuals-hud.properties");
+        Properties props = new Properties();
+
+        props.setProperty("watermarkX", String.valueOf(Modules.watermarkX));
+        props.setProperty("watermarkY", String.valueOf(Modules.watermarkY));
+        props.setProperty("playerInfoX", String.valueOf(Modules.playerInfoX));
+        props.setProperty("playerInfoY", String.valueOf(Modules.playerInfoY));
+        props.setProperty("potionsX", String.valueOf(Modules.potionsX));
+        props.setProperty("potionsY", String.valueOf(Modules.potionsY));
+        props.setProperty("cooldownsX", String.valueOf(Modules.cooldownsX));
+        props.setProperty("cooldownsY", String.valueOf(Modules.cooldownsY));
+        props.setProperty("inventoryX", String.valueOf(Modules.inventoryX));
+        props.setProperty("inventoryY", String.valueOf(Modules.inventoryY));
+
+        props.setProperty("watermarkEnabled", String.valueOf(Modules.watermarkEnabled));
+        props.setProperty("playerInfo", String.valueOf(Modules.playerInfo));
+        props.setProperty("armorStatusEnabled", String.valueOf(Modules.armorStatusEnabled));
+        props.setProperty("potionsEnabled", String.valueOf(Modules.potionsEnabled));
+        props.setProperty("cooldownsEnabled", String.valueOf(Modules.cooldownsEnabled));
+        props.setProperty("keybindsEnabled", String.valueOf(Modules.keybindsEnabled));
+        props.setProperty("keystrokesEnabled", String.valueOf(Modules.keystrokesEnabled));
+        props.setProperty("inventoryHudEnabled", String.valueOf(Modules.inventoryHudEnabled));
+
+        props.setProperty("deathEffect", String.valueOf(Modules.deathEffect));
+        props.setProperty("killEffect", String.valueOf(Modules.killEffect));
+        props.setProperty("hitSound", String.valueOf(Modules.hitSound));
+        props.setProperty("deathSound", String.valueOf(Modules.deathSound));
+        props.setProperty("targetEsp", String.valueOf(Modules.targetEsp));
+        props.setProperty("autoShift", String.valueOf(Modules.autoShift));
+        props.setProperty("chinaHit", String.valueOf(Modules.chinaHit));
+        props.setProperty("customHand", String.valueOf(Modules.customHand));
+        props.setProperty("fullBright", String.valueOf(Modules.fullBright));
+        props.setProperty("hitColor", String.valueOf(Modules.hitColor));
+        props.setProperty("hitboxCustomizer", String.valueOf(Modules.hitboxCustomizer));
+        props.setProperty("jumpCircles", String.valueOf(Modules.jumpCircles));
+        props.setProperty("particles", String.valueOf(Modules.particles));
+        props.setProperty("renderTweaks", String.valueOf(Modules.renderTweaks));
+
+        try {
+            Files.createDirectories(path.getParent());
+            try (OutputStream out = Files.newOutputStream(path)) {
+                props.store(out, "Vortex Visuals configuration");
+            }
+        } catch (IOException e) {
+            System.err.println("[Vortex Visuals] Could not save config: " + e.getMessage());
+        }
     }
 
     private static long lastPotionRefresh;
