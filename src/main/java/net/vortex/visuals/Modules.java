@@ -1,6 +1,7 @@
 package net.vortex.visuals;
 
 public class Modules {
+    // Категории функций
     public static boolean deathEffect = false;
     public static boolean killEffect = false;
     public static boolean hitSound = true;
@@ -22,7 +23,8 @@ public class Modules {
     public static boolean timeChanger = false;
     public static String timeMode = "Day";
 
-    // HUD элементы
+    // HUD элементы (каждый отключаемый)
+    public static boolean watermarkEnabled = true;
     public static boolean playerInfo = true;
     public static boolean armorStatusEnabled = true;
     public static boolean potionsEnabled = true;
@@ -31,7 +33,10 @@ public class Modules {
     public static boolean keystrokesEnabled = true;
     public static boolean inventoryHudEnabled = true;
 
-    // Координаты
+    // Координаты для свободного перетаскивания в чате
+    public static int watermarkX = 10;
+    public static int watermarkY = 10;
+
     public static int playerInfoX = 30;
     public static int playerInfoY = 140;
 
