@@ -21,6 +21,15 @@ public class Modules {
     public static boolean particles = false;
     public static boolean renderTweaks = false;
 
+    // Custom crosshair
+    public static boolean customCrosshairEnabled = false;
+    public static int crosshairThickness = 2;
+    public static int crosshairGap = 4;
+    public static int crosshairRed = 145;
+    public static int crosshairGreen = 60;
+    public static int crosshairBlue = 255;
+    public static boolean crosshairCenterDot = true;
+
     // HUD
     public static boolean watermarkEnabled = false;
     public static boolean playerInfo = false;
