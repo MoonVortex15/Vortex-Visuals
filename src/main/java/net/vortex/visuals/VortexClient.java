@@ -50,5 +50,6 @@ public class VortexClient implements ClientModInitializer {
 
         // Регистрация Block Overlay
         BlockOverlayRenderer.register();
+        TargetEspRenderer.register();
     }
 }
