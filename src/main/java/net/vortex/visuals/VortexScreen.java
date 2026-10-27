@@ -34,7 +34,6 @@ public class VortexScreen extends Screen {
             if (mouseY >= catY + 100 && mouseY <= catY + 120) { currentCategory = Category.SETTINGS; return true; }
         }
 
-        // Клик по карточкам функций
         int startX = panelX + 135;
         int startY = panelY + 75;
         int cardW = 330;
@@ -69,7 +68,6 @@ public class VortexScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Полупрозрачный фон экрана настроек
         context.fill(0, 0, this.width, this.height, 0x80000000);
 
         int panelW = 480;
@@ -77,17 +75,16 @@ public class VortexScreen extends Screen {
         int panelX = (this.width - panelW) / 2;
         int panelY = (this.height - panelH) / 2;
 
-        // Основное окно с закругленным стилем
+        // Основное окно интерфейса
         context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xEE121118);
         context.drawBorder(panelX, panelY, panelW, panelH, 0xFF2A263B);
 
-        // Левая панель (исправлен код цвета)
+        // Левая панель категорий
         context.fill(panelX, panelY, panelX + 125, panelY + panelH, 0xFF0D0C12);
-        context.drawTextWithShadow(this.textRenderer, "V", panelX + 18, panelY + 20, 0x7A3EE4);
+        context.drawTextWithShadow(this.textRenderer, "P", panelX + 18, panelY + 20, 0x7A3EE4);
         context.drawTextWithShadow(this.textRenderer, "Vortex", panelX + 34, panelY + 18, 0xFFFFFF);
         context.drawTextWithShadow(this.textRenderer, "1.1.1", panelX + 34, panelY + 30, 0x777588);
 
-        // Категории
         int catY = panelY + 100;
         drawCategoryButton(context, "⚔ Бой", panelX + 15, catY, currentCategory == Category.COMBAT);
         drawCategoryButton(context, "🎨 Визуалы", panelX + 15, catY + 25, currentCategory == Category.VISUALS);
@@ -95,7 +92,6 @@ public class VortexScreen extends Screen {
         drawCategoryButton(context, "⚙️ Утилиты", panelX + 15, catY + 75, currentCategory == Category.UTILITIES);
         drawCategoryButton(context, "🔧 Настройки", panelX + 15, catY + 100, currentCategory == Category.SETTINGS);
 
-        // Поиск
         int searchX = panelX + 280;
         int searchY = panelY + 18;
         context.fill(searchX, searchY, searchX + 180, searchY + 24, 0xFF191722);
@@ -122,7 +118,7 @@ public class VortexScreen extends Screen {
             drawFeatureCard(context, "Watermark", "Отображение вотермарки сверху.", Modules.watermarkEnabled, startX, startY, 0, cardW, cardH);
             drawFeatureCard(context, "Player Info", "HP, ник и полоска здоровья.", Modules.playerInfo, startX, startY, 1, cardW, cardH);
             drawFeatureCard(context, "Potions HUD", "Список активных зелий.", Modules.potionsEnabled, startX, startY, 2, cardW, cardH);
-            drawFeatureCard(context, "Cooldowns", "Таймеры кулдаунов.", Modules.cooldownsEnabled, startX, startY, 3, cardW, cardH);
+            drawFeatureCard(context, "Cooldowns", "Динамические кулдауны предметов.", Modules.cooldownsEnabled, startX, startY, 3, cardW, cardH);
             drawFeatureCard(context, "Keybinds", "Панель активных биндов.", Modules.keybindsEnabled, startX, startY, 4, cardW, cardH);
             drawFeatureCard(context, "Keystrokes", "Отображение клавиш WASD.", Modules.keystrokesEnabled, startX, startY, 5, cardW, cardH);
             drawFeatureCard(context, "Inventory HUD", "Мини-инвентарь на экране.", Modules.inventoryHudEnabled, startX, startY, 6, cardW, cardH);
@@ -139,11 +135,9 @@ public class VortexScreen extends Screen {
     private void drawFeatureCard(DrawContext context, String title, String desc, boolean state, int startX, int startY, int index, int w, int h) {
         int y = startY + index * (h + 6);
         context.fill(startX, y, startX + w, y + h, 0xFF191722);
-
         context.drawTextWithShadow(this.textRenderer, title, startX + 12, y + 6, 0xFFFFFF);
         context.drawTextWithShadow(this.textRenderer, desc, startX + 12, y + 18, 0x777588);
 
-        // Стильный фиолетовый тумблер
         int tw = 32, th = 16;
         int tx = startX + w - tw - 12;
         int ty = y + (h - th) / 2;
