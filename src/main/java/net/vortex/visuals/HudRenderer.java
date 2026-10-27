@@ -46,11 +46,11 @@ public class HudRenderer {
             draggingElement = null;
         }
 
-        // 0. Вотермарк
+        // 0. Вотермарк с информацией
         if (Modules.watermarkEnabled) {
             String timeStr = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
             String serverIp = client.getCurrentServerEntry() != null ? client.getCurrentServerEntry().address : "Singleplayer";
-            String wmText = "Plintus Visuals | FPS: " + client.getCurrentFps() + " | Ping: 0ms | TPS: 20.0 | Time: " + timeStr + " | " + serverIp;
+            String wmText = "Vortex Visuals | FPS: " + client.getCurrentFps() + " | Ping: 0ms | TPS: 20.0 | Time: " + timeStr + " | " + serverIp;
             int w = client.textRenderer.getWidth(wmText) + 16;
             int h = 24;
             drawRoundedCard(context, Modules.watermarkX, Modules.watermarkY, w, h, "watermark", inChat, mouseX, mouseY, isPressed);
@@ -76,7 +76,7 @@ public class HudRenderer {
             context.drawTextWithShadow(client.textRenderer, "Огнестойкость  04:52", Modules.potionsX + 10, Modules.potionsY + 38, 0xAAAAAA);
         }
 
-        // 3. Динамические Кулдауны (исправлено под ItemStack)
+        // 3. Динамические Кулдауны (появляются только при использовании предмета)
         if (Modules.cooldownsEnabled) {
             float cooldown = client.player.getItemCooldownManager().getCooldownProgress(client.player.getMainHandStack(), 0.0f);
             if (cooldown > 0.0f) {
@@ -95,7 +95,7 @@ public class HudRenderer {
             context.drawTextWithShadow(client.textRenderer, "Hit Effect     [MB3]", Modules.keybindsX + 10, Modules.keybindsY + 24, 0xAAAAAA);
         }
 
-        // 5. Keystrokes
+        // 5. Keystrokes (WASD)
         if (Modules.keystrokesEnabled) {
             int kx = Modules.keystrokesX;
             int ky = Modules.keystrokesY;
@@ -108,7 +108,7 @@ public class HudRenderer {
             drawRoundedKey(context, client, "RMB", kx + 64, ky + 72, 50, 16);
         }
 
-        // 6. Inventory Preview
+        // 6. Inventory Preview (Мини-инвентарь с золотыми яблоками)
         if (Modules.inventoryHudEnabled) {
             int ix = Modules.inventoryX;
             int iy = Modules.inventoryY;
@@ -120,7 +120,7 @@ public class HudRenderer {
             }
         }
 
-        // 7. Армор-статус
+        // 7. Армор-статус вокруг хотбара
         if (Modules.armorStatusEnabled) {
             int hotbarLeft = width / 2 - 91;
             int hotbarRight = width / 2 + 91;
