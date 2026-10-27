@@ -17,12 +17,6 @@ public class VortexScreen extends Screen {
         super.init();
     }
 
-    // ОТМЕНЯЕМ ВАНИЛЬНОЕ РАЗМЫТИЕ ФОНА ИГРЫ
-    @Override
-    public boolean isBlurred() {
-        return false;
-    }
-
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int centerX = this.width / 2;
@@ -72,7 +66,7 @@ public class VortexScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Чистый и резкий темный фон без ванильной мути
+        // Чистый и плотный фон без мути
         context.fill(0, 0, this.width, this.height, 0xB0000000);
 
         int panelW = 460;
