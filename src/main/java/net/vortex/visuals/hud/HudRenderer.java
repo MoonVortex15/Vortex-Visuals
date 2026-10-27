@@ -1,5 +1,6 @@
 package net.vortex.visuals.hud;
 
+import net.vortex.visuals.Modules;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ChatScreen;
