@@ -46,7 +46,7 @@ public class HudRenderer {
             draggingElement = null;
         }
 
-        // 0. Вотермарк (с закругленными углами, FPS, Пинг, TPS, Время, IP сервера)
+        // 0. Вотермарк
         if (Modules.watermarkEnabled) {
             String timeStr = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
             String serverIp = client.getCurrentServerEntry() != null ? client.getCurrentServerEntry().address : "Singleplayer";
@@ -57,7 +57,7 @@ public class HudRenderer {
             context.drawTextWithShadow(client.textRenderer, wmText, Modules.watermarkX + 8, Modules.watermarkY + 8, 0xFFFFFF);
         }
 
-        // 1. Player Info (с полоской HP)
+        // 1. Player Info
         if (Modules.playerInfo) {
             int w = 150, h = 50;
             drawRoundedCard(context, Modules.playerInfoX, Modules.playerInfoY, w, h, "playerInfo", inChat, mouseX, mouseY, isPressed);
@@ -76,9 +76,9 @@ public class HudRenderer {
             context.drawTextWithShadow(client.textRenderer, "Огнестойкость  04:52", Modules.potionsX + 10, Modules.potionsY + 38, 0xAAAAAA);
         }
 
-        // 3. Динамические Кулдауны (показываются реальные кулдауны предметов в руках)
+        // 3. Динамические Кулдауны (исправлено под ItemStack)
         if (Modules.cooldownsEnabled) {
-            float cooldown = client.player.getItemCooldownManager().getCooldownProgress(client.player.getMainHandStack().getItem(), 0.0f);
+            float cooldown = client.player.getItemCooldownManager().getCooldownProgress(client.player.getMainHandStack(), 0.0f);
             if (cooldown > 0.0f) {
                 int w = 150, h = 45;
                 drawRoundedCard(context, Modules.cooldownsX, Modules.cooldownsY, w, h, "cooldowns", inChat, mouseX, mouseY, isPressed);
@@ -95,7 +95,7 @@ public class HudRenderer {
             context.drawTextWithShadow(client.textRenderer, "Hit Effect     [MB3]", Modules.keybindsX + 10, Modules.keybindsY + 24, 0xAAAAAA);
         }
 
-        // 5. Keystrokes (WASD)
+        // 5. Keystrokes
         if (Modules.keystrokesEnabled) {
             int kx = Modules.keystrokesX;
             int ky = Modules.keystrokesY;
@@ -108,20 +108,19 @@ public class HudRenderer {
             drawRoundedKey(context, client, "RMB", kx + 64, ky + 72, 50, 16);
         }
 
-        // 6. Inventory Preview (показывает золотые яблоки / геплы из инвентаря)
+        // 6. Inventory Preview
         if (Modules.inventoryHudEnabled) {
             int ix = Modules.inventoryX;
             int iy = Modules.inventoryY;
             drawRoundedCard(context, ix, iy, 180, 65, "inventory", inChat, mouseX, mouseY, isPressed);
             context.drawTextWithShadow(client.textRenderer, "📌 Inventory", ix + 10, iy + 8, 0xFFFFFF);
             
-            // Рендерим золотые яблоки как на референсе
             for (int i = 0; i < 7; i++) {
                 context.drawItem(new ItemStack(Items.GOLDEN_APPLE), ix + 10 + (i * 22), iy + 28);
             }
         }
 
-        // 7. Армор-статус вокруг хотбара
+        // 7. Армор-статус
         if (Modules.armorStatusEnabled) {
             int hotbarLeft = width / 2 - 91;
             int hotbarRight = width / 2 + 91;
@@ -134,13 +133,9 @@ public class HudRenderer {
         }
     }
 
-    // Программное скругление углов для карточек HUD
     private static void drawRoundedCard(DrawContext context, int x, int y, int w, int h, String id, boolean inChat, double mouseX, double mouseY, boolean isPressed) {
-        // Основной фон с полупрозрачностью
         context.fill(x + 2, y, x + w - 2, y + h, 0xCC0E0D14);
         context.fill(x, y + 2, x + w, y + h - 2, 0xCC0E0D14);
-        
-        // Обводка (фиолетовая при перетаскивании в чате)
         int borderColor = inChat ? 0xFF7A3EE4 : 0xFF242035;
         context.drawBorder(x, y, w, h, borderColor);
 
