@@ -24,7 +24,6 @@ public class VortexScreen extends Screen {
         int panelX = centerX - 240;
         int panelY = centerY - 150;
 
-        // Клик по левой панели категорий
         if (mouseX >= panelX + 15 && mouseX <= panelX + 115) {
             int catY = panelY + 110;
             if (mouseY >= catY && mouseY <= catY + 20) { currentCategory = Category.COMBAT; return true; }
@@ -75,13 +74,11 @@ public class VortexScreen extends Screen {
         int panelX = (this.width - panelW) / 2;
         int panelY = (this.height - panelH) / 2;
 
-        // Основное окно интерфейса
         context.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xEE121118);
         context.drawBorder(panelX, panelY, panelW, panelH, 0xFF2A263B);
 
-        // Левая панель категорий
         context.fill(panelX, panelY, panelX + 125, panelY + panelH, 0xFF0D0C12);
-        context.drawTextWithShadow(this.textRenderer, "P", panelX + 18, panelY + 20, 0x7A3EE4);
+        context.drawTextWithShadow(this.textRenderer, "V", panelX + 18, panelY + 20, 0x7A3EE4);
         context.drawTextWithShadow(this.textRenderer, "Vortex", panelX + 34, panelY + 18, 0xFFFFFF);
         context.drawTextWithShadow(this.textRenderer, "1.1.1", panelX + 34, panelY + 30, 0x777588);
 
