@@ -508,7 +508,6 @@ public final class HudRenderer {
     // ---------------- KEYBINDS HUD ----------------
     private static void renderKeybinds(DrawContext c, MinecraftClient mc, boolean edit,
             double mx, double my, boolean pressed) {
-        int x = Modules.keybindsX, y = Modules.keybindsY;
         List<String> active = new ArrayList<>();
         if (mc.options.forwardKey.isPressed()) active.add("Forward");
         if (mc.options.backKey.isPressed()) active.add("Back");
@@ -519,7 +518,15 @@ public final class HudRenderer {
         if (mc.options.sneakKey.isPressed()) active.add("Sneak");
         if (active.isEmpty() && !edit) return;
         int rows = Math.max(1, active.size());
-        card(c, x, y, 126, 20 + rows * 12, "keybinds", edit, mx, my, pressed);
+        int width = 126;
+        int height = 20 + rows * 12;
+        int screenW = mc.getWindow().getScaledWidth();
+        int screenH = mc.getWindow().getScaledHeight();
+        int x = Math.max(0, Math.min(Modules.keybindsX, Math.max(0, screenW - width)));
+        int y = Math.max(0, Math.min(Modules.keybindsY, Math.max(0, screenH - height)));
+        Modules.keybindsX = x;
+        Modules.keybindsY = y;
+        card(c, x, y, width, height, "keybinds", edit, mx, my, pressed);
         c.drawText(mc.textRenderer, "KEYBINDS", x + 7, y + 4, 0xFFFFFFFF, false);
         if (active.isEmpty()) c.drawText(mc.textRenderer, "No active keys", x + 7, y + 17, 0xBFFFFFFF, false);
         else for (int i = 0; i < active.size(); i++) c.drawText(mc.textRenderer, active.get(i), x + 7, y + 17 + i * 12, 0xEFFFFFFF, false);
@@ -528,8 +535,16 @@ public final class HudRenderer {
     // ---------------- KEYSTROKES HUD ----------------
     private static void renderKeystrokes(DrawContext c, MinecraftClient mc, boolean edit,
             double mx, double my, boolean pressed) {
-        int x = Modules.keystrokesX, y = Modules.keystrokesY, size = 18, gap = 3;
-        card(c, x, y, 3 * size + 4 * gap, 3 * size + 4 * gap + 3, "keystrokes", edit, mx, my, pressed);
+        int size = 18, gap = 3;
+        int width = 3 * size + 4 * gap;
+        int height = 3 * size + 4 * gap + 3;
+        int screenW = mc.getWindow().getScaledWidth();
+        int screenH = mc.getWindow().getScaledHeight();
+        int x = Math.max(0, Math.min(Modules.keystrokesX, Math.max(0, screenW - width)));
+        int y = Math.max(0, Math.min(Modules.keystrokesY, Math.max(0, screenH - height)));
+        Modules.keystrokesX = x;
+        Modules.keystrokesY = y;
+        card(c, x, y, width, height, "keystrokes", edit, mx, my, pressed);
         drawKey(c, mc, "W", x + size + gap * 2, y + 3, mc.options.forwardKey.isPressed(), 18);
         drawKey(c, mc, "A", x + 3, y + size + gap + 3, mc.options.leftKey.isPressed(), 18);
         drawKey(c, mc, "S", x + size + gap * 2, y + size + gap + 3, mc.options.backKey.isPressed(), 18);
