@@ -21,6 +21,8 @@ public class VortexScreen extends Screen {
     private static final int MUTED = 0xFFB4A2D5;
 
     private int panelX, panelY, panelW, panelH;
+    private boolean editingBlockOverlay = false;
+    private int activeSlider = -1;
 
     public VortexScreen() {
         super(Text.literal("Vortex Visuals"));
@@ -28,18 +30,38 @@ public class VortexScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button != 0) {
+        layout();
+        if (editingBlockOverlay) {
+            if (button == 1 && inside(mouseX, mouseY, panelX + panelW - 30, panelY + 8, 22, 22)) {
+                editingBlockOverlay = false;
+                return true;
+            }
+            if (button == 0) {
+                int sliderY = panelY + 100;
+                for (int i = 0; i < 8; i++) {
+                    int sy = sliderY + i * 31;
+                    if (inside(mouseX, mouseY, panelX + 170, sy, panelW - 205, 14)) {
+                        activeSlider = i;
+                        updateBlockSlider(i, mouseX);
+                        HudRenderer.saveConfig();
+                        return true;
+                    }
+                }
+                if (inside(mouseX, mouseY, panelX + 140, panelY + 58, panelW - 154, 30)) {
+                    Modules.blockOverlayEnabled = !Modules.blockOverlayEnabled;
+                    HudRenderer.saveConfig();
+                    return true;
+                }
+            }
             return super.mouseClicked(mouseX, mouseY, button);
         }
 
-        layout();
+        if (button != 0 && button != 1) return super.mouseClicked(mouseX, mouseY, button);
 
         int sideX = panelX + 12;
         int sideW = 116;
         int sideY = panelY + 88;
-
         Category[] categories = Category.values();
-
         for (int i = 0; i < categories.length; i++) {
             int y = sideY + i * 29;
             if (inside(mouseX, mouseY, sideX, y, sideW, 25)) {
@@ -53,18 +75,53 @@ public class VortexScreen extends Screen {
         int w = panelW - 154;
         int h = 33;
         int gap = 5;
-
         int count = getFeatureCount();
         for (int i = 0; i < count; i++) {
             int cy = y + i * (h + gap);
             if (inside(mouseX, mouseY, x, cy, w, h)) {
+                if (currentCategory == Category.VISUALS && i == 3 && button == 1) {
+                    editingBlockOverlay = true;
+                    return true;
+                }
+                if (button == 1) return super.mouseClicked(mouseX, mouseY, button);
                 toggleFeature(i);
                 HudRenderer.saveConfig();
                 return true;
             }
         }
-
         return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        activeSlider = -1;
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        if (editingBlockOverlay && activeSlider >= 0 && button == 0) {
+            updateBlockSlider(activeSlider, mouseX);
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    }
+
+    private void updateBlockSlider(int index, double mouseX) {
+        int x = panelX + 170;
+        int w = panelW - 205;
+        int value = (int)Math.round(Math.max(0, Math.min(1, (mouseX - x) / (double)w)) * (index == 6 ? 255 : index == 7 ? 6 : 255));
+        switch (index) {
+            case 0 -> Modules.blockOverlayFillRed = value;
+            case 1 -> Modules.blockOverlayFillGreen = value;
+            case 2 -> Modules.blockOverlayFillBlue = value;
+            case 3 -> Modules.blockOverlayOutlineRed = value;
+            case 4 -> Modules.blockOverlayOutlineGreen = value;
+            case 5 -> Modules.blockOverlayOutlineBlue = value;
+            case 6 -> Modules.blockOverlayAlpha = value;
+            case 7 -> Modules.blockOverlayLineWidth = Math.max(1, value);
+        }
+        HudRenderer.saveConfig();
     }
 
     private void layout() {
@@ -83,7 +140,7 @@ public class VortexScreen extends Screen {
     private int getFeatureCount() {
         return switch (currentCategory) {
             case COMBAT -> 5;
-            case VISUALS -> 3;
+            case VISUALS -> 4;
             case HUD -> 7;
             case UTILITIES, SETTINGS -> 0;
         };
@@ -105,6 +162,7 @@ public class VortexScreen extends Screen {
                     case 0 -> Modules.fullBright = !Modules.fullBright;
                     case 1 -> Modules.particles = !Modules.particles;
                     case 2 -> Modules.customCrosshairEnabled = !Modules.customCrosshairEnabled;
+                    case 3 -> Modules.blockOverlayEnabled = !Modules.blockOverlayEnabled;
                 }
             }
             case HUD -> {
@@ -128,6 +186,29 @@ public class VortexScreen extends Screen {
         layout();
 
         c.fill(0, 0, width, height, 0xA8000010);
+        if (editingBlockOverlay) {
+            c.fill(panelX, panelY, panelX + panelW, panelY + panelH, PANEL);
+            c.drawBorder(panelX, panelY, panelW, panelH, PURPLE);
+            c.drawTextWithShadow(textRenderer, "BLOCK OVERLAY SETTINGS", panelX + 18, panelY + 18, TEXT);
+            c.drawTextWithShadow(textRenderer, "X", panelX + panelW - 20, panelY + 16, PURPLE);
+            c.fill(panelX + 140, panelY + 58, panelX + panelW - 14, panelY + 88, CARD);
+            c.drawTextWithShadow(textRenderer, "Enabled", panelX + 150, panelY + 68, TEXT);
+            drawToggle(c, panelX + panelW - 54, panelY + 65, Modules.blockOverlayEnabled);
+            String[] labels = {"Fill red", "Fill green", "Fill blue", "Outline red", "Outline green", "Outline blue", "Fill opacity", "Line width"};
+            int[] values = {Modules.blockOverlayFillRed, Modules.blockOverlayFillGreen, Modules.blockOverlayFillBlue, Modules.blockOverlayOutlineRed, Modules.blockOverlayOutlineGreen, Modules.blockOverlayOutlineBlue, Modules.blockOverlayAlpha, Modules.blockOverlayLineWidth};
+            for (int i = 0; i < labels.length; i++) {
+                int sy = panelY + 100 + i * 31;
+                c.drawTextWithShadow(textRenderer, labels[i] + "  " + values[i], panelX + 18, sy + 2, TEXT);
+                int sx = panelX + 170, sw = panelW - 205;
+                c.fill(sx, sy + 3, sx + sw, sy + 11, 0xFF393047);
+                int max = i == 7 ? 6 : 255;
+                int filled = (int)(sw * (values[i] / (double)max));
+                c.fill(sx, sy + 3, sx + filled, sy + 11, PURPLE);
+                c.fill(sx + filled - 2, sy, sx + filled + 2, sy + 14, TEXT);
+            }
+            super.render(c, mouseX, mouseY, delta);
+            return;
+        }
 
         // Main window and sidebar.
         c.fill(panelX, panelY, panelX + panelW, panelY + panelH, PANEL);
@@ -262,7 +343,9 @@ public class VortexScreen extends Screen {
             };
             case VISUALS -> switch (i) {
                 case 0 -> new Feature("Full Bright", "Brighter world", Modules.fullBright);
-                default -> new Feature("Particles", "Visual particles", Modules.particles);
+                case 1 -> new Feature("Particles", "Visual particles", Modules.particles);
+                case 2 -> new Feature("Crosshair", "Custom crosshair", Modules.customCrosshairEnabled);
+                default -> new Feature("Block Overlay", "Block outline and fill settings (RMB)", Modules.blockOverlayEnabled);
             };
             case HUD -> switch (i) {
                 case 0 -> new Feature("Watermark", "Name, FPS, ping and time", Modules.watermarkEnabled);
