@@ -20,6 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class HudRenderer {
+    private static PlayerEntity lastTarget;
+    private static long targetExpiresAt;
+
+public static void setTarget(PlayerEntity target) {
+    lastTarget = target;
+    targetExpiresAt = System.currentTimeMillis() + 15_000L;
+}
     private static String draggingElement;
     private static int dragOffsetX, dragOffsetY;
 
