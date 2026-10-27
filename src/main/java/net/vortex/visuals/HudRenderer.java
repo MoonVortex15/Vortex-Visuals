@@ -5,165 +5,178 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
 import org.lwjgl.glfw.GLFW;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
-public class HudRenderer {
-    private static String draggingElement = null;
-    private static int dragOffsetX = 0;
-    private static int dragOffsetY = 0;
+/** Lightweight rounded, translucent HUD for Vortex Visuals. */
+public final class HudRenderer {
+    private static String draggingElement;
+    private static int dragOffsetX, dragOffsetY;
+    private static long lastPotionRefresh;
+    private static List<StatusEffectInstance> cachedEffects = List.of();
 
-    public static void render(DrawContext context, RenderTickCounter tickCounter) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null || client.options.hudHidden) return;
+    private HudRenderer() {}
 
-        int width = client.getWindow().getScaledWidth();
-        int height = client.getWindow().getScaledHeight();
-        boolean inChat = client.currentScreen instanceof ChatScreen;
+    public static void render(DrawContext ctx, RenderTickCounter tickCounter) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc.player == null || mc.world == null || mc.options.hudHidden) return;
+        int sw = mc.getWindow().getScaledWidth(), sh = mc.getWindow().getScaledHeight();
+        boolean editing = mc.currentScreen instanceof ChatScreen;
+        double mx = mc.mouse.getX() * (double) sw / mc.getWindow().getWidth();
+        double my = mc.mouse.getY() * (double) sh / mc.getWindow().getHeight();
+        boolean pressed = GLFW.glfwGetMouseButton(mc.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
+        if (!editing || !pressed) draggingElement = null;
+        if (editing && pressed && draggingElement != null) move(draggingElement, (int) mx - dragOffsetX, (int) my - dragOffsetY);
 
-        double mouseX = client.mouse.getX() * (double) client.getWindow().getScaledWidth() / (double) client.getWindow().getWidth();
-        double mouseY = client.mouse.getY() * (double) client.getWindow().getScaledHeight() / (double) client.getWindow().getHeight();
-        boolean isPressed = GLFW.glfwGetMouseButton(client.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
+        if (Modules.watermarkEnabled) renderWatermark(ctx, mc, editing, mx, my, pressed);
+        if (Modules.playerInfo) renderTarget(ctx, mc, sw, sh, editing, mx, my, pressed);
+        if (Modules.potionsEnabled) renderPotions(ctx, mc, sw, sh, editing, mx, my, pressed);
+        if (Modules.cooldownsEnabled) renderCooldowns(ctx, mc, sw, sh, editing, mx, my, pressed);
+    }
 
-        if (inChat) {
-            if (!isPressed) {
-                draggingElement = null;
-            } else if (draggingElement != null) {
-                if (draggingElement.equals("watermark")) { Modules.watermarkX = (int) mouseX - dragOffsetX; Modules.watermarkY = (int) mouseY - dragOffsetY; }
-                else if (draggingElement.equals("playerInfo")) { Modules.playerInfoX = (int) mouseX - dragOffsetX; Modules.playerInfoY = (int) mouseY - dragOffsetY; }
-                else if (draggingElement.equals("potions")) { Modules.potionsX = (int) mouseX - dragOffsetX; Modules.potionsY = (int) mouseY - dragOffsetY; }
-                else if (draggingElement.equals("cooldowns")) { Modules.cooldownsX = (int) mouseX - dragOffsetX; Modules.cooldownsY = (int) mouseY - dragOffsetY; }
-                else if (draggingElement.equals("keybinds")) { Modules.keybindsX = (int) mouseX - dragOffsetX; Modules.keybindsY = (int) mouseY - dragOffsetY; }
-                else if (draggingElement.equals("keystrokes")) { Modules.keystrokesX = (int) mouseX - dragOffsetX; Modules.keystrokesY = (int) mouseY - dragOffsetY; }
-                else if (draggingElement.equals("inventory")) { Modules.inventoryX = (int) mouseX - dragOffsetX; Modules.inventoryY = (int) mouseY - dragOffsetY; }
-            }
-        } else {
-            draggingElement = null;
+    private static void renderWatermark(DrawContext c, MinecraftClient mc, boolean edit, double mx, double my, boolean pressed) {
+        String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"));
+        int ping = 0;
+        if (mc.getNetworkHandler() != null && mc.player != null && mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid()) != null)
+            ping = mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid()).getLatency();
+        String title = "VORTEX";
+        String stats = "FPS " + mc.getCurrentFps() + "   PING " + ping + "ms   " + time;
+        int w = mc.textRenderer.getWidth(title) + mc.textRenderer.getWidth(stats) + 34;
+        int x = Modules.watermarkX, y = Modules.watermarkY;
+        card(c, x, y, w, 24, "watermark", edit, mx, my, pressed);
+        c.drawText(mc.textRenderer, title, x + 10, y + 8, 0xFFFFFFFF, false);
+        c.fill(x + 10 + mc.textRenderer.getWidth(title) + 8, y + 6, x + 11 + mc.textRenderer.getWidth(title) + 8, y + 18, 0x66FFFFFF);
+        c.drawText(mc.textRenderer, stats, x + mc.textRenderer.getWidth(title) + 24, y + 8, 0xDFFFFFFF, false);
+    }
+
+    private static void renderTarget(DrawContext c, MinecraftClient mc, int sw, int sh, boolean edit, double mx, double my, boolean pressed) {
+        LivingEntity target = null;
+        HitResult hit = mc.crosshairTarget;
+        if (hit instanceof EntityHitResult ehr && ehr.getEntity() instanceof LivingEntity living && living != mc.player && living.isAlive()) target = living;
+        if (target == null && !edit) return;
+        int x = Modules.playerInfoX, y = Modules.playerInfoY, w = 174, h = 62;
+        card(c, x, y, w, h, "playerInfo", edit, mx, my, pressed);
+        if (target == null) {
+            c.drawText(mc.textRenderer, "TARGET HUD", x + 10, y + 8, 0xFFFFFFFF, false);
+            c.drawText(mc.textRenderer, "Aim at a player", x + 10, y + 25, 0xBFFFFFFF, false);
+            return;
         }
-
-        // 0. Вотермарк с информацией
-        if (Modules.watermarkEnabled) {
-            String timeStr = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-            String serverIp = client.getCurrentServerEntry() != null ? client.getCurrentServerEntry().address : "Singleplayer";
-            String wmText = "Vortex Visuals | FPS: " + client.getCurrentFps() + " | Ping: 0ms | TPS: 20.0 | Time: " + timeStr + " | " + serverIp;
-            int w = client.textRenderer.getWidth(wmText) + 16;
-            int h = 24;
-            drawRoundedCard(context, Modules.watermarkX, Modules.watermarkY, w, h, "watermark", inChat, mouseX, mouseY, isPressed);
-            context.drawTextWithShadow(client.textRenderer, wmText, Modules.watermarkX + 8, Modules.watermarkY + 8, 0xFFFFFF);
+        // The icon is a lightweight player-head item; no per-frame texture allocation.
+        c.drawItem(new ItemStack(Items.PLAYER_HEAD), x + 8, y + 9);
+        String name = target.getName().getString();
+        if (name.length() > 15) name = name.substring(0, 14) + "…";
+        c.drawText(mc.textRenderer, name, x + 32, y + 8, 0xFFFFFFFF, false);
+        c.drawText(mc.textRenderer, String.format(java.util.Locale.ROOT, "%.1f HP", target.getHealth()), x + 32, y + 21, 0xDFFFFFFF, false);
+        int barX = x + 32, barY = y + 35, barW = 132;
+        rounded(c, barX, barY, barW, 5, 2, 0x55333333);
+        float max = Math.max(1.0f, target.getMaxHealth());
+        rounded(c, barX, barY, Math.max(1, Math.min(barW, (int)(barW * target.getHealth() / max))), 5, 2, 0xDFFFFFFF);
+        int ix = x + 8;
+        EquipmentSlot[] armorSlots = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
+        for (int slot = 0; slot < armorSlots.length; slot++) {
+            ItemStack armor = target.getEquippedStack(armorSlots[slot]);
+            if (!armor.isEmpty()) c.drawItem(armor, ix + slot * 19, y + 42);
         }
+        ItemStack held = target.getMainHandStack();
+        if (!held.isEmpty()) c.drawItem(held, x + w - 25, y + 40);
+    }
 
-        // 1. Player Info
-        if (Modules.playerInfo) {
-            int w = 150, h = 50;
-            drawRoundedCard(context, Modules.playerInfoX, Modules.playerInfoY, w, h, "playerInfo", inChat, mouseX, mouseY, isPressed);
-            context.drawTextWithShadow(client.textRenderer, client.player.getName().getString(), Modules.playerInfoX + 10, Modules.playerInfoY + 8, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "HP: " + (int)client.player.getHealth() + " (+16)", Modules.playerInfoX + 10, Modules.playerInfoY + 20, 0x888599);
-            context.fill(Modules.playerInfoX + 10, Modules.playerInfoY + 34, Modules.playerInfoX + 140, Modules.playerInfoY + 38, 0xFF1E1B2C);
-            context.fill(Modules.playerInfoX + 10, Modules.playerInfoY + 34, Modules.playerInfoX + 10 + (int)(130 * (client.player.getHealth() / 20.0f)), Modules.playerInfoY + 38, 0xFF7A3EE4);
+    private static void renderPotions(DrawContext c, MinecraftClient mc, int sw, int sh, boolean edit, double mx, double my, boolean pressed) {
+        if (System.currentTimeMillis() - lastPotionRefresh > 500) {
+            cachedEffects = new ArrayList<>(mc.player.getStatusEffects());
+            lastPotionRefresh = System.currentTimeMillis();
         }
-
-        // 2. Potions HUD
-        if (Modules.potionsEnabled) {
-            int w = 150, h = 65;
-            drawRoundedCard(context, Modules.potionsX, Modules.potionsY, w, h, "potions", inChat, mouseX, mouseY, isPressed);
-            context.drawTextWithShadow(client.textRenderer, "Potions", Modules.potionsX + 10, Modules.potionsY + 8, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "Регенерация 2  00:12", Modules.potionsX + 10, Modules.potionsY + 24, 0xAAAAAA);
-            context.drawTextWithShadow(client.textRenderer, "Огнестойкость  04:52", Modules.potionsX + 10, Modules.potionsY + 38, 0xAAAAAA);
+        int x = Modules.potionsX, y = Modules.potionsY;
+        if (cachedEffects.isEmpty() && !edit) return;
+        int rows = Math.min(5, cachedEffects.size());
+        int h = 22 + Math.max(1, rows) * 13;
+        card(c, x, y, 158, h, "potions", edit, mx, my, pressed);
+        c.drawText(mc.textRenderer, "EFFECTS", x + 9, y + 7, 0xFFFFFFFF, false);
+        if (cachedEffects.isEmpty()) {
+            c.drawText(mc.textRenderer, "No active effects", x + 9, y + 21, 0xBFFFFFFF, false);
+            return;
         }
-
-        // 3. Динамические Кулдауны (появляются только при использовании предмета)
-        if (Modules.cooldownsEnabled) {
-            float cooldown = client.player.getItemCooldownManager().getCooldownProgress(client.player.getMainHandStack(), 0.0f);
-            if (cooldown > 0.0f) {
-                int w = 150, h = 45;
-                drawRoundedCard(context, Modules.cooldownsX, Modules.cooldownsY, w, h, "cooldowns", inChat, mouseX, mouseY, isPressed);
-                context.drawTextWithShadow(client.textRenderer, "CoolDowns", Modules.cooldownsX + 10, Modules.cooldownsY + 8, 0xFFFFFF);
-                context.drawTextWithShadow(client.textRenderer, "Item CD: " + (int)(cooldown * 5.0f) + "s", Modules.cooldownsX + 10, Modules.cooldownsY + 24, 0xAAAAAA);
-            }
-        }
-
-        // 4. Keybinds
-        if (Modules.keybindsEnabled) {
-            int w = 150, h = 45;
-            drawRoundedCard(context, Modules.keybindsX, Modules.keybindsY, w, h, "keybinds", inChat, mouseX, mouseY, isPressed);
-            context.drawTextWithShadow(client.textRenderer, "Keybinds", Modules.keybindsX + 10, Modules.keybindsY + 8, 0xFFFFFF);
-            context.drawTextWithShadow(client.textRenderer, "Hit Effect     [MB3]", Modules.keybindsX + 10, Modules.keybindsY + 24, 0xAAAAAA);
-        }
-
-        // 5. Keystrokes (WASD)
-        if (Modules.keystrokesEnabled) {
-            int kx = Modules.keystrokesX;
-            int ky = Modules.keystrokesY;
-            drawRoundedCard(context, kx, ky, 120, 95, "keystrokes", inChat, mouseX, mouseY, isPressed);
-            drawRoundedKey(context, client, "W", kx + 44, ky + 10, 28, 28);
-            drawRoundedKey(context, client, "A", kx + 12, ky + 42, 28, 28);
-            drawRoundedKey(context, client, "S", kx + 44, ky + 42, 28, 28);
-            drawRoundedKey(context, client, "D", kx + 76, ky + 42, 28, 28);
-            drawRoundedKey(context, client, "LMB", kx + 12, ky + 72, 50, 16);
-            drawRoundedKey(context, client, "RMB", kx + 64, ky + 72, 50, 16);
-        }
-
-        // 6. Inventory Preview (Мини-инвентарь с золотыми яблоками)
-        if (Modules.inventoryHudEnabled) {
-            int ix = Modules.inventoryX;
-            int iy = Modules.inventoryY;
-            drawRoundedCard(context, ix, iy, 180, 65, "inventory", inChat, mouseX, mouseY, isPressed);
-            context.drawTextWithShadow(client.textRenderer, "📌 Inventory", ix + 10, iy + 8, 0xFFFFFF);
-            
-            for (int i = 0; i < 7; i++) {
-                context.drawItem(new ItemStack(Items.GOLDEN_APPLE), ix + 10 + (i * 22), iy + 28);
-            }
-        }
-
-        // 7. Армор-статус вокруг хотбара
-        if (Modules.armorStatusEnabled) {
-            int hotbarLeft = width / 2 - 91;
-            int hotbarRight = width / 2 + 91;
-            int hudY = height - 20;
-
-            renderArmorItem(context, client, client.player.getEquippedStack(EquipmentSlot.FEET), hotbarLeft - 48, hudY);
-            renderArmorItem(context, client, client.player.getEquippedStack(EquipmentSlot.LEGS), hotbarLeft - 24, hudY);
-            renderArmorItem(context, client, client.player.getEquippedStack(EquipmentSlot.CHEST), hotbarRight + 8, hudY);
-            renderArmorItem(context, client, client.player.getEquippedStack(EquipmentSlot.HEAD), hotbarRight + 32, hudY);
+        for (int i = 0; i < rows; i++) {
+            StatusEffectInstance e = cachedEffects.get(i);
+            String label = e.getEffectType().value().getName().getString();
+            String duration = formatDuration(e.getDuration());
+            int maxName = 105;
+            while (mc.textRenderer.getWidth(label) > maxName && label.length() > 3) label = label.substring(0, label.length() - 2) + "…";
+            c.drawText(mc.textRenderer, label, x + 9, y + 21 + i * 13, 0xEFFFFFFF, false);
+            c.drawText(mc.textRenderer, duration, x + 112, y + 21 + i * 13, 0xBFFFFFFF, false);
         }
     }
 
-    private static void drawRoundedCard(DrawContext context, int x, int y, int w, int h, String id, boolean inChat, double mouseX, double mouseY, boolean isPressed) {
-        context.fill(x + 2, y, x + w - 2, y + h, 0xCC0E0D14);
-        context.fill(x, y + 2, x + w, y + h - 2, 0xCC0E0D14);
-        int borderColor = inChat ? 0xFF7A3EE4 : 0xFF242035;
-        context.drawBorder(x, y, w, h, borderColor);
-
-        if (inChat && isPressed && draggingElement == null) {
-            if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
-                draggingElement = id;
-                dragOffsetX = (int) mouseX - x;
-                dragOffsetY = (int) mouseY - y;
-            }
+    private static void renderCooldowns(DrawContext c, MinecraftClient mc, int sw, int sh, boolean edit, double mx, double my, boolean pressed) {
+        int x = Modules.cooldownsX, y = Modules.cooldownsY;
+        List<ItemStack> stacks = new ArrayList<>();
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = mc.player.getInventory().getStack(i);
+            if (!stack.isEmpty() && mc.player.getItemCooldownManager().isCoolingDown(stack.getItem())) stacks.add(stack);
+        }
+        if (stacks.isEmpty() && !edit) return;
+        int w = Math.max(100, 12 + Math.min(5, stacks.size()) * 22);
+        card(c, x, y, w, 42, "cooldowns", edit, mx, my, pressed);
+        c.drawText(mc.textRenderer, "COOLDOWNS", x + 8, y + 5, 0xFFFFFFFF, false);
+        if (stacks.isEmpty()) {
+            c.drawText(mc.textRenderer, "No cooldowns", x + 8, y + 21, 0xBFFFFFFF, false);
+            return;
+        }
+        for (int i = 0; i < Math.min(5, stacks.size()); i++) {
+            ItemStack stack = stacks.get(i);
+            int sx = x + 7 + i * 22;
+            c.drawItem(stack, sx, y + 18);
+            float progress = mc.player.getItemCooldownManager().getCooldownProgress(stack.getItem(), 0.0f);
+            c.drawText(mc.textRenderer, Math.round(progress * 100) + "%", sx, y + 31, 0xDFFFFFFF, false);
         }
     }
 
-    private static void drawRoundedKey(DrawContext context, MinecraftClient client, String text, int x, int y, int w, int h) {
-        context.fill(x + 2, y, x + w - 2, y + h, 0xCC191722);
-        context.fill(x, y + 2, x + w, y + h - 2, 0xCC191722);
-        context.drawBorder(x, y, w, h, 0xFF2A263B);
-        context.drawCenteredTextWithShadow(client.textRenderer, text, x + w / 2, y + (h - 8) / 2, 0xFFFFFF);
+    private static String formatDuration(int ticks) {
+        if (ticks < 0) return "∞";
+        int seconds = ticks / 20;
+        return String.format(java.util.Locale.ROOT, "%02d:%02d", seconds / 60, seconds % 60);
     }
 
-    private static void renderArmorItem(DrawContext context, MinecraftClient client, ItemStack stack, int x, int y) {
-        if (stack.isEmpty()) return;
-        context.drawItem(stack, x, y);
-        if (stack.isDamageable()) {
-            int max = stack.getMaxDamage();
-            int current = max - stack.getDamage();
-            int percent = (int) (((float) current / max) * 100);
-            int color = percent < 20 ? 0xFF5555 : (percent < 50 ? 0xFFFF55 : 0x55FF55);
-            context.drawTextWithShadow(client.textRenderer, percent + "%", x + 16, y + 4, color);
+    private static void card(DrawContext c, int x, int y, int w, int h, String id, boolean edit, double mx, double my, boolean pressed) {
+        rounded(c, x, y, w, h, 6, 0xB8141418);
+        // subtle light edge, intentionally low contrast so text stays readable
+        c.fill(x + 6, y, x + w - 6, y + 1, 0x55FFFFFF);
+        if (edit && pressed && draggingElement == null && mx >= x && mx <= x + w && my >= y && my <= y + h) {
+            draggingElement = id;
+            dragOffsetX = (int) mx - x;
+            dragOffsetY = (int) my - y;
+        }
+    }
+
+    private static void rounded(DrawContext c, int x, int y, int w, int h, int r, int color) {
+        if (w <= 0 || h <= 0) return;
+        r = Math.min(r, Math.min(w / 2, h / 2));
+        c.fill(x + r, y, x + w - r, y + h, color);
+        for (int row = 0; row < r; row++) {
+            int inset = r - (int)Math.floor(Math.sqrt((double)r * r - (double)(r - row) * (r - row)));
+            c.fill(x + inset, y + row, x + w - inset, y + row + 1, color);
+            c.fill(x + inset, y + h - row - 1, x + w - inset, y + h - row, color);
+        }
+    }
+
+    private static void move(String id, int x, int y) {
+        switch (id) {
+            case "watermark" -> { Modules.watermarkX = x; Modules.watermarkY = y; }
+            case "playerInfo" -> { Modules.playerInfoX = x; Modules.playerInfoY = y; }
+            case "potions" -> { Modules.potionsX = x; Modules.potionsY = y; }
+            case "cooldowns" -> { Modules.cooldownsX = x; Modules.cooldownsY = y; }
         }
     }
 }
