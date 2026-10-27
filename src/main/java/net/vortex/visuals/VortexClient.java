@@ -1,4 +1,3 @@
-
 package net.vortex.visuals;
 
 import net.vortex.visuals.hud.HudRenderer;
