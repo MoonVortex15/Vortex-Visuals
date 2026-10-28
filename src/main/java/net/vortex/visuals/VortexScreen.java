@@ -11,7 +11,7 @@ public class VortexScreen extends Screen {
         COMBAT, VISUALS, HUD, UTILITIES, SETTINGS
     }
 
-    private static Category lastCategory = Category.HUD;
+    private static Category lastCategory = Category.VISUALS;
     private Category currentCategory = lastCategory;
 
     private static final int PURPLE = 0xFF913CFF;
@@ -128,13 +128,16 @@ public class VortexScreen extends Screen {
 
         int x = panelX + 140;
         int y = panelY + 67;
-        int w = panelW - 154;
-        int h = 33;
-        int gap = 5;
+        int w = currentCategory == Category.VISUALS ? (panelW - 159) / 2 : panelW - 154;
+        int h = currentCategory == Category.VISUALS ? 43 : 33;
+        int gap = currentCategory == Category.VISUALS ? 7 : 5;
         int count = getFeatureCount();
         for (int i = 0; i < count; i++) {
-            int cy = y + i * (h + gap);
-            if (inside(mouseX, mouseY, x, cy, w, h)) {
+            int col = currentCategory == Category.VISUALS ? i % 2 : 0;
+            int row = currentCategory == Category.VISUALS ? i / 2 : i;
+            int cx = x + col * (w + gap);
+            int cy = y + row * (h + gap);
+            if (inside(mouseX, mouseY, cx, cy, w, h)) {
                 if (button == 1 && currentCategory == Category.HUD) {
                     editingHudIndex = i;
                     return true;
@@ -518,9 +521,9 @@ public class VortexScreen extends Screen {
 
         // Feature cards.
         int startY = panelY + 67;
-        int cardW = panelW - 154;
-        int cardH = 33;
-        int gap = 5;
+        int cardW = currentCategory == Category.VISUALS ? (panelW - 159) / 2 : panelW - 154;
+        int cardH = currentCategory == Category.VISUALS ? 43 : 33;
+        int gap = currentCategory == Category.VISUALS ? 7 : 5;
 
         int count = getFeatureCount();
 
@@ -537,22 +540,25 @@ public class VortexScreen extends Screen {
         }
 
         for (int i = 0; i < count; i++) {
-            int y = startY + i * (cardH + gap);
+            int col = currentCategory == Category.VISUALS ? i % 2 : 0;
+            int row = currentCategory == Category.VISUALS ? i / 2 : i;
+            int cardX = contentX + col * (cardW + gap);
+            int y = startY + row * (cardH + gap);
             Feature feature = getFeature(i);
             boolean hover = inside(mouseX, mouseY,
-                    contentX, y, cardW, cardH);
+                    cardX, y, cardW, cardH);
 
-            c.fill(contentX, y, contentX + cardW,
+            c.fill(cardX, y, cardX + cardW,
                     y + cardH, hover ? 0xFF211533 : CARD);
-            c.drawBorder(contentX, y, cardW, cardH,
+            c.drawBorder(cardX, y, cardW, cardH,
                     hover ? PURPLE : BORDER);
 
             c.drawTextWithShadow(textRenderer, feature.name,
-                    contentX + 9, y + 5, TEXT);
+                    cardX + 9, y + 5, TEXT);
             c.drawTextWithShadow(textRenderer, feature.description,
-                    contentX + 9, y + 18, MUTED);
+                    cardX + 9, y + 19, MUTED);
 
-            drawToggle(c, contentX + cardW - 38,
+            drawToggle(c, cardX + cardW - 38,
                     y + 9, feature.enabled);
         }
 
