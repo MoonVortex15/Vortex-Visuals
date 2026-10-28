@@ -19,6 +19,14 @@ public class Modules {
     // Визуалы
     public static boolean chinaHit = false;
     public static boolean customHand = false;
+    public static int handOffsetX = 0;
+    public static int handOffsetY = 0;
+    public static int handOffsetZ = 0;
+    public static int handScalePercent = 100;
+    public static int handRotation = 0;
+    public static int handAngle = 0;
+    // 0 = normal, 1 = smooth, 2 = static
+    public static int handAnimationStyle = 0;
     public static boolean fullBright = false;
     public static boolean hitColor = false;
     public static int hitColorRgb = 0xFF5555;
@@ -31,12 +39,22 @@ public class Modules {
     public static boolean timeChanger = false;
     public static int customTimeOfDay = 6000;
     public static boolean trails = false;
+    public static int trailLifetimeTicks = 30;
+    public static int trailRed = 145;
+    public static int trailGreen = 60;
+    public static int trailBlue = 255;
     public static boolean enchantmentEffects = false;
     public static int enchantmentColor = 0x913CFF;
     public static boolean damageIndicators = false;
+    public static int damageIndicatorSize = 12;
+    public static int damageIndicatorRise = 10;
+    public static int damageIndicatorRed = 255;
+    public static int damageIndicatorGreen = 90;
+    public static int damageIndicatorBlue = 90;
     public static boolean trajectories = false;
     public static boolean shieldTotemCounter = false;
     public static boolean hitBubbles = false;
+    public static int hitBubbleSize = 2;
     public static boolean waypoints = false;
     public static String waypointName = "Home";
     public static int waypointX = 0;
