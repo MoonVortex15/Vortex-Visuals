@@ -11,7 +11,7 @@ public class VortexScreen extends Screen {
         COMBAT, VISUALS, HUD, UTILITIES, SETTINGS
     }
 
-    private static Category lastCategory = Category.VISUALS;
+    private static Category lastCategory = Category.HUD;
     private Category currentCategory = lastCategory;
 
     private static final int PURPLE = 0xFF913CFF;
@@ -26,6 +26,7 @@ public class VortexScreen extends Screen {
     private boolean editingTargetEsp = false;
     private boolean editingCrosshair = false;
     private boolean editingCustomHand = false;
+    private boolean editingOffHand = false;
     private int editingHudIndex = -1;
     private int activeSlider = -1;
 
@@ -54,8 +55,10 @@ public class VortexScreen extends Screen {
         if (editingCustomHand) {
             if (button == 1 && inside(mouseX, mouseY, panelX + panelW - 30, panelY + 8, 22, 22)) { editingCustomHand = false; return true; }
             if (button == 0) {
-                for (int i = 0; i < 6; i++) {
-                    int sy = panelY + 78 + i * 34;
+                if (inside(mouseX, mouseY, panelX + 18, panelY + 44, 150, 25)) { editingOffHand = false; activeSlider = -1; return true; }
+                if (inside(mouseX, mouseY, panelX + 176, panelY + 44, 150, 25)) { editingOffHand = true; activeSlider = -1; return true; }
+                for (int i = 0; i < 7; i++) {
+                    int sy = panelY + 88 + i * 32;
                     if (inside(mouseX, mouseY, panelX + 170, sy, panelW - 205, 14)) { activeSlider = i; updateCustomHandSlider(i, mouseX); HudRenderer.saveConfig(); return true; }
                 }
             }
@@ -128,16 +131,13 @@ public class VortexScreen extends Screen {
 
         int x = panelX + 140;
         int y = panelY + 67;
-        int w = currentCategory == Category.VISUALS ? (panelW - 159) / 2 : panelW - 154;
-        int h = currentCategory == Category.VISUALS ? 43 : 33;
-        int gap = currentCategory == Category.VISUALS ? 7 : 5;
+        int w = panelW - 154;
+        int h = 33;
+        int gap = 5;
         int count = getFeatureCount();
         for (int i = 0; i < count; i++) {
-            int col = currentCategory == Category.VISUALS ? i % 2 : 0;
-            int row = currentCategory == Category.VISUALS ? i / 2 : i;
-            int cx = x + col * (w + gap);
-            int cy = y + row * (h + gap);
-            if (inside(mouseX, mouseY, cx, cy, w, h)) {
+            int cy = y + i * (h + gap);
+            if (inside(mouseX, mouseY, x, cy, w, h)) {
                 if (button == 1 && currentCategory == Category.HUD) {
                     editingHudIndex = i;
                     return true;
@@ -225,16 +225,29 @@ public class VortexScreen extends Screen {
         int x = panelX + 170;
         int w = panelW - 205;
         double fraction = Math.max(0, Math.min(1, (mouseX - x) / (double) w));
-        int value = index == 5
-                ? (int)Math.round(fraction * 360.0) - 180
-                : (int)Math.round(fraction * (index == 3 ? 175 : index == 4 ? 360 : 100)) - (index < 3 ? 50 : 0);
-        switch (index) {
-            case 0 -> Modules.handOffsetX = value;
-            case 1 -> Modules.handOffsetY = value;
-            case 2 -> Modules.handOffsetZ = value;
-            case 3 -> Modules.handScalePercent = Math.max(25, Math.min(200, value + 25));
-            case 4 -> Modules.handRotation = value;
-            case 5 -> Modules.handAngle = value;
+        int min = index < 3 ? -50 : index == 3 ? 25 : -360;
+        int max = index == 3 ? 200 : index < 3 ? 50 : 360;
+        int value = (int)Math.round(min + fraction * (max - min));
+        if (editingOffHand) {
+            switch (index) {
+                case 0 -> Modules.offHandOffsetX = value;
+                case 1 -> Modules.offHandOffsetY = value;
+                case 2 -> Modules.offHandOffsetZ = value;
+                case 3 -> Modules.offHandScalePercent = value;
+                case 4 -> Modules.offHandRotationX = value;
+                case 5 -> Modules.offHandRotationY = value;
+                case 6 -> Modules.offHandRotationZ = value;
+            }
+        } else {
+            switch (index) {
+                case 0 -> Modules.handOffsetX = value;
+                case 1 -> Modules.handOffsetY = value;
+                case 2 -> Modules.handOffsetZ = value;
+                case 3 -> Modules.handScalePercent = value;
+                case 4 -> Modules.handAngle = value;
+                case 5 -> Modules.handRotationY = value;
+                case 6 -> Modules.handRotation = value;
+            }
         }
         HudRenderer.saveConfig();
     }
@@ -372,15 +385,21 @@ public class VortexScreen extends Screen {
             c.drawBorder(panelX, panelY, panelW, panelH, PURPLE);
             c.drawTextWithShadow(textRenderer, "CUSTOM HAND SETTINGS", panelX + 18, panelY + 18, TEXT);
             c.drawTextWithShadow(textRenderer, "RMB: back", panelX + panelW - 88, panelY + 18, PURPLE);
-            String[] labels = {"Offset X", "Offset Y", "Offset Z", "Scale %", "Rotation Z", "Angle X (degrees)"};
-            int[] values = {Modules.handOffsetX, Modules.handOffsetY, Modules.handOffsetZ, Modules.handScalePercent, Modules.handRotation, Modules.handAngle};
+            c.fill(panelX + 18, panelY + 44, panelX + 164, panelY + 69, editingOffHand ? CARD : 0xFF6333A8);
+            c.fill(panelX + 176, panelY + 44, panelX + 322, panelY + 69, editingOffHand ? 0xFF6333A8 : CARD);
+            c.drawTextWithShadow(textRenderer, "MAIN HAND", panelX + 42, panelY + 52, TEXT);
+            c.drawTextWithShadow(textRenderer, "OFF HAND", panelX + 210, panelY + 52, TEXT);
+            String[] labels = {"Offset X", "Offset Y", "Offset Z", "Scale %", "Rotation X (degrees)", "Rotation Y (degrees)", "Rotation Z (degrees)"};
+            int[] values = editingOffHand
+                ? new int[]{Modules.offHandOffsetX, Modules.offHandOffsetY, Modules.offHandOffsetZ, Modules.offHandScalePercent, Modules.offHandRotationX, Modules.offHandRotationY, Modules.offHandRotationZ}
+                : new int[]{Modules.handOffsetX, Modules.handOffsetY, Modules.handOffsetZ, Modules.handScalePercent, Modules.handAngle, Modules.handRotationY, Modules.handRotation};
             for (int i = 0; i < labels.length; i++) {
-                int sy = panelY + 78 + i * 34;
+                int sy = panelY + 88 + i * 32;
                 c.drawTextWithShadow(textRenderer, labels[i] + "  " + values[i], panelX + 18, sy + 2, TEXT);
                 int sx = panelX + 170, sw = panelW - 205;
                 c.fill(sx, sy + 3, sx + sw, sy + 11, 0xFF393047);
-                int min = i < 3 ? -50 : i == 3 ? 25 : i == 4 ? 0 : -180;
-                int max = i < 3 ? 50 : i == 3 ? 200 : i == 4 ? 360 : 180;
+                int min = i < 3 ? -50 : i == 3 ? 25 : -360;
+                int max = i == 3 ? 200 : i < 3 ? 50 : 360;
                 int normalized = Math.max(0, Math.min(100, (values[i] - min) * 100 / Math.max(1, max - min)));
                 int filled = sw * normalized / 100;
                 c.fill(sx, sy + 3, sx + filled, sy + 11, PURPLE);
@@ -521,9 +540,9 @@ public class VortexScreen extends Screen {
 
         // Feature cards.
         int startY = panelY + 67;
-        int cardW = currentCategory == Category.VISUALS ? (panelW - 159) / 2 : panelW - 154;
-        int cardH = currentCategory == Category.VISUALS ? 43 : 33;
-        int gap = currentCategory == Category.VISUALS ? 7 : 5;
+        int cardW = panelW - 154;
+        int cardH = 33;
+        int gap = 5;
 
         int count = getFeatureCount();
 
@@ -540,25 +559,22 @@ public class VortexScreen extends Screen {
         }
 
         for (int i = 0; i < count; i++) {
-            int col = currentCategory == Category.VISUALS ? i % 2 : 0;
-            int row = currentCategory == Category.VISUALS ? i / 2 : i;
-            int cardX = contentX + col * (cardW + gap);
-            int y = startY + row * (cardH + gap);
+            int y = startY + i * (cardH + gap);
             Feature feature = getFeature(i);
             boolean hover = inside(mouseX, mouseY,
-                    cardX, y, cardW, cardH);
+                    contentX, y, cardW, cardH);
 
-            c.fill(cardX, y, cardX + cardW,
+            c.fill(contentX, y, contentX + cardW,
                     y + cardH, hover ? 0xFF211533 : CARD);
-            c.drawBorder(cardX, y, cardW, cardH,
+            c.drawBorder(contentX, y, cardW, cardH,
                     hover ? PURPLE : BORDER);
 
             c.drawTextWithShadow(textRenderer, feature.name,
-                    cardX + 9, y + 5, TEXT);
+                    contentX + 9, y + 5, TEXT);
             c.drawTextWithShadow(textRenderer, feature.description,
-                    cardX + 9, y + 19, MUTED);
+                    contentX + 9, y + 18, MUTED);
 
-            drawToggle(c, cardX + cardW - 38,
+            drawToggle(c, contentX + cardW - 38,
                     y + 9, feature.enabled);
         }
 
