@@ -14,9 +14,12 @@ import org.joml.Matrix4f;
 public final class TargetEspRenderer {
 
 
+    private static boolean registered = false;
     private TargetEspRenderer() {}
 
     public static void register() {
+        if (registered) return;
+        registered = true;
         WorldRenderEvents.AFTER_TRANSLUCENT.register(
                 TargetEspRenderer::render
         );
