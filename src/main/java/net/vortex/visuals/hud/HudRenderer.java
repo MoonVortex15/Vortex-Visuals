@@ -225,6 +225,30 @@ public final class HudRenderer {
 
         if (Modules.customCrosshairEnabled)
             renderCustomCrosshair(ctx, sw, sh);
+
+        if (Modules.shieldTotemCounter) {
+            int totems = 0;
+            for (ItemStack stack : mc.player.getInventory().main) {
+                if (stack.isOf(Items.TOTEM_OF_UNDYING)) totems += stack.getCount();
+            }
+            for (ItemStack stack : mc.player.getInventory().offHand) {
+                if (stack.isOf(Items.TOTEM_OF_UNDYING)) totems += stack.getCount();
+            }
+            ctx.drawTextWithShadow(mc.textRenderer, "Totems: " + totems, 10, sh - 24, 0xFFFFD76A);
+            int shields = 0;
+            for (ItemStack stack : mc.player.getInventory().main) if (stack.isOf(Items.SHIELD)) shields += stack.getCount();
+            for (ItemStack stack : mc.player.getInventory().offHand) if (stack.isOf(Items.SHIELD)) shields += stack.getCount();
+            ctx.drawTextWithShadow(mc.textRenderer, "Shields: " + shields, 10, sh - 12, 0xFFF5EEFF);
+        }
+
+        if (Modules.waypoints) {
+            double dx = Modules.waypointX - mc.player.getX();
+            double dy = Modules.waypointY - mc.player.getY();
+            double dz = Modules.waypointZ - mc.player.getZ();
+            int distance = (int)Math.round(Math.sqrt(dx * dx + dy * dy + dz * dz));
+            String label = Modules.waypointName + " [" + Modules.waypointX + ", " + Modules.waypointY + ", " + Modules.waypointZ + "] " + distance + "m";
+            ctx.drawTextWithShadow(mc.textRenderer, label, 10, sh - 38, 0xFFB77AFF);
+        }
     }
 
     // ---------------- WATERMARK ----------------
