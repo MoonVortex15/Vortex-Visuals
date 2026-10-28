@@ -19,6 +19,7 @@ public class VortexClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        HudRenderer.loadConfig();
         openMenuKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.vortex_visuals.open_menu",
                 InputUtil.Type.KEYSYM,
