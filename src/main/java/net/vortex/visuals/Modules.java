@@ -24,7 +24,16 @@ public class Modules {
     public static int handOffsetZ = 0;
     public static int handScalePercent = 100;
     public static int handRotation = 0;
-    public static int handAngle = 0;
+    public static int handAngle = 0; // Main-hand rotation X (legacy field)
+    public static int handRotationY = 0;
+    // Independent off-hand controls
+    public static int offHandOffsetX = 0;
+    public static int offHandOffsetY = 0;
+    public static int offHandOffsetZ = 0;
+    public static int offHandScalePercent = 100;
+    public static int offHandRotationX = 0;
+    public static int offHandRotationY = 0;
+    public static int offHandRotationZ = 0;
     // 0 = normal, 1 = smooth, 2 = static
     public static int handAnimationStyle = 0;
     public static boolean fullBright = false;
