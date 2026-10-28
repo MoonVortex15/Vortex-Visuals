@@ -5,7 +5,8 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "NoBlurMixin",
-    "CustomCrosshairMixin"
+    "CustomCrosshairMixin",
+    "TimeChangerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
