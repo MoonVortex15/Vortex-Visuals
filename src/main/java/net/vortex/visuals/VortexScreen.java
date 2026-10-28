@@ -11,7 +11,8 @@ public class VortexScreen extends Screen {
         COMBAT, VISUALS, HUD, UTILITIES, SETTINGS
     }
 
-    private Category currentCategory = Category.HUD;
+    private static Category lastCategory = Category.HUD;
+    private Category currentCategory = lastCategory;
 
     private static final int PURPLE = 0xFF913CFF;
     private static final int PANEL = 0xF20B0918;
@@ -24,6 +25,7 @@ public class VortexScreen extends Screen {
     private boolean editingBlockOverlay = false;
     private boolean editingTargetEsp = false;
     private boolean editingCrosshair = false;
+    private int editingHudIndex = -1;
     private int activeSlider = -1;
 
     public VortexScreen() {
@@ -33,6 +35,21 @@ public class VortexScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         layout();
+        if (editingHudIndex >= 0) {
+            if (button == 1) { editingHudIndex = -1; return true; }
+            if (button == 0) {
+                for (int i = 0; i < 2; i++) {
+                    int sy = panelY + 92 + i * 38;
+                    if (inside(mouseX, mouseY, panelX + 170, sy, panelW - 205, 14)) {
+                        activeSlider = i;
+                        updateHudSlider(i, mouseX);
+                        HudRenderer.saveConfig();
+                        return true;
+                    }
+                }
+            }
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
         if (editingTargetEsp || editingCrosshair) {
             if (button == 1 && inside(mouseX, mouseY, panelX + panelW - 30, panelY + 8, 22, 22)) {
                 editingTargetEsp = false;
@@ -93,6 +110,7 @@ public class VortexScreen extends Screen {
             int y = sideY + i * 29;
             if (inside(mouseX, mouseY, sideX, y, sideW, 25)) {
                 currentCategory = categories[i];
+                lastCategory = currentCategory;
                 return true;
             }
         }
@@ -106,6 +124,10 @@ public class VortexScreen extends Screen {
         for (int i = 0; i < count; i++) {
             int cy = y + i * (h + gap);
             if (inside(mouseX, mouseY, x, cy, w, h)) {
+                if (button == 1 && currentCategory == Category.HUD) {
+                    editingHudIndex = i;
+                    return true;
+                }
                 if (button == 1 && currentCategory == Category.VISUALS && i == 3) {
                     editingBlockOverlay = true;
                     return true;
@@ -143,7 +165,27 @@ public class VortexScreen extends Screen {
             updateGeneralSlider(activeSlider, mouseX);
             return true;
         }
+        if (editingHudIndex >= 0 && activeSlider >= 0 && button == 0) {
+            updateHudSlider(activeSlider, mouseX);
+            return true;
+        }
         return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    }
+
+    private void updateHudSlider(int index, double mouseX) {
+        int x = panelX + 170;
+        int w = panelW - 205;
+        int value = (int)Math.round(Math.max(0, Math.min(1, (mouseX - x) / (double)w)) * 800);
+        switch (editingHudIndex) {
+            case 0 -> { if (index == 0) Modules.watermarkX = value; else Modules.watermarkY = value; }
+            case 1 -> { if (index == 0) Modules.playerInfoX = value; else Modules.playerInfoY = value; }
+            case 2 -> { if (index == 0) Modules.armorX = value; else Modules.armorY = value; }
+            case 3 -> { if (index == 0) Modules.potionsX = value; else Modules.potionsY = value; }
+            case 4 -> { if (index == 0) Modules.cooldownsX = value; else Modules.cooldownsY = value; }
+            case 5 -> { if (index == 0) Modules.keybindsX = value; else Modules.keybindsY = value; }
+            case 6 -> { if (index == 0) Modules.inventoryX = value; else Modules.inventoryY = value; }
+        }
+        HudRenderer.saveConfig();
     }
 
     private void updateBlockSlider(int index, double mouseX) {
@@ -206,10 +248,11 @@ public class VortexScreen extends Screen {
 
     private int getFeatureCount() {
         return switch (currentCategory) {
-            case COMBAT -> 5;
-            case VISUALS -> 4;
+            case COMBAT -> 6;
+            case VISUALS -> 9;
             case HUD -> 7;
-            case UTILITIES, SETTINGS -> 0;
+            case UTILITIES -> 4;
+            case SETTINGS -> 0;
         };
     }
 
@@ -222,6 +265,7 @@ public class VortexScreen extends Screen {
                     case 2 -> Modules.hitSound = !Modules.hitSound;
                     case 3 -> Modules.deathSound = !Modules.deathSound;
                     case 4 -> Modules.targetEsp = !Modules.targetEsp;
+                    case 5 -> Modules.damageIndicators = !Modules.damageIndicators;
                 }
             }
             case VISUALS -> {
@@ -230,6 +274,19 @@ public class VortexScreen extends Screen {
                     case 1 -> Modules.particles = !Modules.particles;
                     case 2 -> Modules.customCrosshairEnabled = !Modules.customCrosshairEnabled;
                     case 3 -> Modules.blockOverlayEnabled = !Modules.blockOverlayEnabled;
+                    case 4 -> Modules.timeChanger = !Modules.timeChanger;
+                    case 5 -> Modules.trails = !Modules.trails;
+                    case 6 -> Modules.enchantmentEffects = !Modules.enchantmentEffects;
+                    case 7 -> Modules.hitBubbles = !Modules.hitBubbles;
+                    case 8 -> Modules.trajectories = !Modules.trajectories;
+                }
+            }
+            case UTILITIES -> {
+                switch (i) {
+                    case 0 -> Modules.shieldTotemCounter = !Modules.shieldTotemCounter;
+                    case 1 -> Modules.waypoints = !Modules.waypoints;
+                    case 2 -> Modules.damageIndicators = !Modules.damageIndicators;
+                    case 3 -> Modules.trajectories = !Modules.trajectories;
                 }
             }
             case HUD -> {
@@ -252,7 +309,29 @@ public class VortexScreen extends Screen {
     public void render(DrawContext c, int mouseX, int mouseY, float delta) {
         layout();
 
-        c.fill(0, 0, width, height, 0xA8000010);
+        if (!(editingTargetEsp || editingCrosshair || editingBlockOverlay || editingHudIndex >= 0))
+            c.fill(0, 0, width, height, 0xA8000010);
+        if (editingHudIndex >= 0) {
+            c.fill(panelX, panelY, panelX + panelW, panelY + 150, PANEL);
+            c.drawBorder(panelX, panelY, panelW, 150, PURPLE);
+            String[] names = {"WATERMARK", "TARGET HUD", "ARMOR HUD", "POTIONS HUD", "COOLDOWNS HUD", "KEYBINDS HUD", "INVENTORY HUD"};
+            int px = switch (editingHudIndex) { case 0 -> Modules.watermarkX; case 1 -> Modules.playerInfoX; case 2 -> Modules.armorX; case 3 -> Modules.potionsX; case 4 -> Modules.cooldownsX; case 5 -> Modules.keybindsX; default -> Modules.inventoryX; };
+            int py = switch (editingHudIndex) { case 0 -> Modules.watermarkY; case 1 -> Modules.playerInfoY; case 2 -> Modules.armorY; case 3 -> Modules.potionsY; case 4 -> Modules.cooldownsY; case 5 -> Modules.keybindsY; default -> Modules.inventoryY; };
+            c.drawTextWithShadow(textRenderer, names[editingHudIndex] + " SETTINGS", panelX + 18, panelY + 18, TEXT);
+            c.drawTextWithShadow(textRenderer, "RMB: back", panelX + panelW - 88, panelY + 18, PURPLE);
+            int[] vals = {px, py}; String[] labels = {"Position X", "Position Y"};
+            for (int i = 0; i < 2; i++) {
+                int sy = panelY + 92 + i * 38;
+                c.drawTextWithShadow(textRenderer, labels[i] + "  " + vals[i], panelX + 18, sy + 2, TEXT);
+                int sx = panelX + 170, sw = panelW - 205;
+                c.fill(sx, sy + 3, sx + sw, sy + 11, 0xFF393047);
+                int filled = (int)(sw * (vals[i] / 800.0));
+                c.fill(sx, sy + 3, sx + filled, sy + 11, PURPLE);
+                c.fill(sx + filled - 2, sy, sx + filled + 2, sy + 14, TEXT);
+            }
+            super.render(c, mouseX, mouseY, delta);
+            return;
+        }
         if (editingTargetEsp || editingCrosshair) {
             c.fill(panelX, panelY, panelX + panelW, panelY + panelH, PANEL);
             c.drawBorder(panelX, panelY, panelW, panelH, PURPLE);
@@ -442,7 +521,18 @@ public class VortexScreen extends Screen {
                 case 0 -> new Feature("Full Bright", "Brighter world", Modules.fullBright);
                 case 1 -> new Feature("Particles", "Visual particles", Modules.particles);
                 case 2 -> new Feature("Crosshair", "Custom crosshair (RMB settings)", Modules.customCrosshairEnabled);
-                default -> new Feature("Block Overlay", "Block outline and fill settings (RMB)", Modules.blockOverlayEnabled);
+                case 3 -> new Feature("Block Overlay", "Block outline and fill settings (RMB)", Modules.blockOverlayEnabled);
+                case 4 -> new Feature("Time Changer", "Freeze world time to chosen hour", Modules.timeChanger);
+                case 5 -> new Feature("Trails", "Entity trail toggle", Modules.trails);
+                case 6 -> new Feature("Enchantment Effects", "Glint color settings planned", Modules.enchantmentEffects);
+                case 7 -> new Feature("Hit Bubbles", "Hit effect toggle", Modules.hitBubbles);
+                default -> new Feature("Trajectories", "Arrow / pearl / potion toggle", Modules.trajectories);
+            };
+            case UTILITIES -> switch (i) {
+                case 0 -> new Feature("Shield & Totem Counter", "Counts inventory items", Modules.shieldTotemCounter);
+                case 1 -> new Feature("Waypoints", "Coordinate marker HUD", Modules.waypoints);
+                case 2 -> new Feature("Damage Indicators", "Damage number toggle", Modules.damageIndicators);
+                default -> new Feature("Trajectories", "Arrow / pearl / potion toggle", Modules.trajectories);
             };
             case HUD -> switch (i) {
                 case 0 -> new Feature("Watermark", "Name, FPS, ping and time", Modules.watermarkEnabled);
