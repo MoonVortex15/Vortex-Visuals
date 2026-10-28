@@ -13,11 +13,6 @@ import org.joml.Matrix4f;
 
 public final class TargetEspRenderer {
 
-    private static final double RANGE = 64.0;
-    private static final float RED = 0.57f;
-    private static final float GREEN = 0.24f;
-    private static final float BLUE = 1.0f;
-    private static final float ALPHA = 1.0f;
 
     private TargetEspRenderer() {}
 
@@ -50,12 +45,12 @@ public final class TargetEspRenderer {
                     || !target.isAlive()
                     || target.isSpectator()
                     || client.player.squaredDistanceTo(target)
-                    > RANGE * RANGE) {
+                    > (double) Modules.targetEspRange * Modules.targetEspRange) {
                 continue;
             }
 
             Box box = target.getBoundingBox()
-                    .expand(0.035)
+                    .expand(Math.max(0.0, Math.min(0.20, Modules.targetEspExpand / 100.0)))
                     .offset(-camera.x, -camera.y, -camera.z);
 
             drawBox(lines, matrix, box);
@@ -99,12 +94,15 @@ public final class TargetEspRenderer {
             double x1, double y1, double z1,
             double x2, double y2, double z2
     ) {
+        float r = Math.max(0, Math.min(255, Modules.targetEspRed)) / 255.0f;
+        float g = Math.max(0, Math.min(255, Modules.targetEspGreen)) / 255.0f;
+        float b = Math.max(0, Math.min(255, Modules.targetEspBlue)) / 255.0f;
         out.vertex(matrix, (float) x1, (float) y1, (float) z1)
-                .color(RED, GREEN, BLUE, ALPHA)
+                .color(r, g, b, 1.0f)
                 .normal(0, 1, 0);
 
         out.vertex(matrix, (float) x2, (float) y2, (float) z2)
-                .color(RED, GREEN, BLUE, ALPHA)
+                .color(r, g, b, 1.0f)
                 .normal(0, 1, 0);
     }
 }
