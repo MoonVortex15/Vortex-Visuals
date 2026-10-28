@@ -6,15 +6,19 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.client.util.math.MatrixStack;
 import org.joml.Matrix4f;
 
 public final class TargetEspRenderer {
+
+    private static final double RANGE = 64.0;
+    private static final float RED = 0.57f;
+    private static final float GREEN = 0.24f;
+    private static final float BLUE = 1.0f;
+    private static final float ALPHA = 1.0f;
+
     private TargetEspRenderer() {}
 
     public static void register() {
@@ -29,71 +33,78 @@ public final class TargetEspRenderer {
         if (!Modules.targetEsp
                 || client.world == null
                 || client.player == null
-                || client.crosshairTarget == null
-                || client.crosshairTarget.getType() != HitResult.Type.ENTITY
-                || !(client.crosshairTarget instanceof EntityHitResult hit)) {
-            return;
-        }
-
-        Entity target = hit.getEntity();
-        if (target == client.player || !target.isAlive()) {
-            return;
-        }
-
-        MatrixStack matrices = context.matrixStack();
-        if (matrices == null || context.consumers() == null) {
+                || context.matrixStack() == null
+                || context.consumers() == null) {
             return;
         }
 
         Vec3d camera = context.camera().getPos();
-        Box box = target.getBoundingBox().expand(0.04)
-                .offset(-camera.x, -camera.y, -camera.z);
+        Matrix4f matrix =
+                context.matrixStack().peek().getPositionMatrix();
 
         VertexConsumer lines = context.consumers()
                 .getBuffer(RenderLayer.getLines());
 
-        Matrix4f matrix = matrices.peek().getPositionMatrix();
+        for (PlayerEntity target : client.world.getPlayers()) {
+            if (target == client.player
+                    || !target.isAlive()
+                    || target.isSpectator()
+                    || client.player.squaredDistanceTo(target)
+                    > RANGE * RANGE) {
+                continue;
+            }
 
-        float r = 0.57f;
-        float g = 0.24f;
-        float b = 1.0f;
-        float a = 1.0f;
+            Box box = target.getBoundingBox()
+                    .expand(0.035)
+                    .offset(-camera.x, -camera.y, -camera.z);
 
-        double x0 = box.minX, x1 = box.maxX;
-        double y0 = box.minY, y1 = box.maxY;
-        double z0 = box.minZ, z1 = box.maxZ;
+            drawBox(lines, matrix, box);
+        }
+    }
 
-        // Нижняя и верхняя грани
-        edge(lines, matrix, x0,y0,z0, x1,y0,z0, r,g,b,a);
-        edge(lines, matrix, x0,y0,z1, x1,y0,z1, r,g,b,a);
-        edge(lines, matrix, x0,y1,z0, x1,y1,z0, r,g,b,a);
-        edge(lines, matrix, x0,y1,z1, x1,y1,z1, r,g,b,a);
+    private static void drawBox(
+            VertexConsumer out,
+            Matrix4f matrix,
+            Box box
+    ) {
+        double x0 = box.minX;
+        double y0 = box.minY;
+        double z0 = box.minZ;
+        double x1 = box.maxX;
+        double y1 = box.maxY;
+        double z1 = box.maxZ;
 
-        edge(lines, matrix, x0,y0,z0, x0,y0,z1, r,g,b,a);
-        edge(lines, matrix, x1,y0,z0, x1,y0,z1, r,g,b,a);
-        edge(lines, matrix, x0,y1,z0, x0,y1,z1, r,g,b,a);
-        edge(lines, matrix, x1,y1,z0, x1,y1,z1, r,g,b,a);
+        // Нижняя грань
+        edge(out, matrix, x0,y0,z0, x1,y0,z0);
+        edge(out, matrix, x1,y0,z0, x1,y0,z1);
+        edge(out, matrix, x1,y0,z1, x0,y0,z1);
+        edge(out, matrix, x0,y0,z1, x0,y0,z0);
+
+        // Верхняя грань
+        edge(out, matrix, x0,y1,z0, x1,y1,z0);
+        edge(out, matrix, x1,y1,z0, x1,y1,z1);
+        edge(out, matrix, x1,y1,z1, x0,y1,z1);
+        edge(out, matrix, x0,y1,z1, x0,y1,z0);
 
         // Вертикальные рёбра
-        edge(lines, matrix, x0,y0,z0, x0,y1,z0, r,g,b,a);
-        edge(lines, matrix, x1,y0,z0, x1,y1,z0, r,g,b,a);
-        edge(lines, matrix, x0,y0,z1, x0,y1,z1, r,g,b,a);
-        edge(lines, matrix, x1,y0,z1, x1,y1,z1, r,g,b,a);
+        edge(out, matrix, x0,y0,z0, x0,y1,z0);
+        edge(out, matrix, x1,y0,z0, x1,y1,z0);
+        edge(out, matrix, x0,y0,z1, x0,y1,z1);
+        edge(out, matrix, x1,y0,z1, x1,y1,z1);
     }
 
     private static void edge(
             VertexConsumer out,
             Matrix4f matrix,
             double x1, double y1, double z1,
-            double x2, double y2, double z2,
-            float r, float g, float b, float a
+            double x2, double y2, double z2
     ) {
-        out.vertex(matrix, (float)x1, (float)y1, (float)z1)
-                .color(r, g, b, a)
+        out.vertex(matrix, (float) x1, (float) y1, (float) z1)
+                .color(RED, GREEN, BLUE, ALPHA)
                 .normal(0, 1, 0);
 
-        out.vertex(matrix, (float)x2, (float)y2, (float)z2)
-                .color(r, g, b, a)
+        out.vertex(matrix, (float) x2, (float) y2, (float) z2)
+                .color(RED, GREEN, BLUE, ALPHA)
                 .normal(0, 1, 0);
     }
 }
