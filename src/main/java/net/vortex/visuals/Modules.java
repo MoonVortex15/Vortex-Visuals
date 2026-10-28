@@ -27,6 +27,22 @@ public class Modules {
     public static boolean particles = false;
     public static boolean renderTweaks = false;
 
+    // Новые визуальные модули
+    public static boolean timeChanger = false;
+    public static int customTimeOfDay = 6000;
+    public static boolean trails = false;
+    public static boolean enchantmentEffects = false;
+    public static int enchantmentColor = 0x913CFF;
+    public static boolean damageIndicators = false;
+    public static boolean trajectories = false;
+    public static boolean shieldTotemCounter = false;
+    public static boolean hitBubbles = false;
+    public static boolean waypoints = false;
+    public static String waypointName = "Home";
+    public static int waypointX = 0;
+    public static int waypointY = 80;
+    public static int waypointZ = 0;
+
     // Block Overlay customization
     public static boolean blockOverlayEnabled = false;
     public static int blockOverlayFillRed = 145;
