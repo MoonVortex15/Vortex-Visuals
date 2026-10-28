@@ -25,6 +25,7 @@ public class VortexScreen extends Screen {
     private boolean editingBlockOverlay = false;
     private boolean editingTargetEsp = false;
     private boolean editingCrosshair = false;
+    private boolean editingCustomHand = false;
     private int editingHudIndex = -1;
     private int activeSlider = -1;
 
@@ -46,6 +47,16 @@ public class VortexScreen extends Screen {
                         HudRenderer.saveConfig();
                         return true;
                     }
+                }
+            }
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
+        if (editingCustomHand) {
+            if (button == 1 && inside(mouseX, mouseY, panelX + panelW - 30, panelY + 8, 22, 22)) { editingCustomHand = false; return true; }
+            if (button == 0) {
+                for (int i = 0; i < 6; i++) {
+                    int sy = panelY + 78 + i * 34;
+                    if (inside(mouseX, mouseY, panelX + 170, sy, panelW - 205, 14)) { activeSlider = i; updateCustomHandSlider(i, mouseX); HudRenderer.saveConfig(); return true; }
                 }
             }
             return super.mouseClicked(mouseX, mouseY, button);
@@ -136,6 +147,7 @@ public class VortexScreen extends Screen {
                     editingCrosshair = true;
                     return true;
                 }
+                if (button == 1 && currentCategory == Category.VISUALS && i == 9) { editingCustomHand = true; return true; }
                 if (button == 1 && currentCategory == Category.COMBAT && i == 4) {
                     editingTargetEsp = true;
                     return true;
@@ -161,6 +173,7 @@ public class VortexScreen extends Screen {
             updateBlockSlider(activeSlider, mouseX);
             return true;
         }
+        if (editingCustomHand && activeSlider >= 0 && button == 0) { updateCustomHandSlider(activeSlider, mouseX); return true; }
         if ((editingTargetEsp || editingCrosshair) && activeSlider >= 0 && button == 0) {
             updateGeneralSlider(activeSlider, mouseX);
             return true;
@@ -201,6 +214,24 @@ public class VortexScreen extends Screen {
             case 5 -> Modules.blockOverlayOutlineBlue = value;
             case 6 -> Modules.blockOverlayAlpha = value;
             case 7 -> Modules.blockOverlayLineWidth = Math.max(1, value);
+        }
+        HudRenderer.saveConfig();
+    }
+
+    private void updateCustomHandSlider(int index, double mouseX) {
+        int x = panelX + 170;
+        int w = panelW - 205;
+        double fraction = Math.max(0, Math.min(1, (mouseX - x) / (double) w));
+        int value = index == 5
+                ? (int)Math.round(fraction * 360.0) - 180
+                : (int)Math.round(fraction * (index == 3 ? 175 : index == 4 ? 360 : 100)) - (index < 3 ? 50 : 0);
+        switch (index) {
+            case 0 -> Modules.handOffsetX = value;
+            case 1 -> Modules.handOffsetY = value;
+            case 2 -> Modules.handOffsetZ = value;
+            case 3 -> Modules.handScalePercent = Math.max(25, Math.min(200, value + 25));
+            case 4 -> Modules.handRotation = value;
+            case 5 -> Modules.handAngle = value;
         }
         HudRenderer.saveConfig();
     }
@@ -249,7 +280,7 @@ public class VortexScreen extends Screen {
     private int getFeatureCount() {
         return switch (currentCategory) {
             case COMBAT -> 6;
-            case VISUALS -> 9;
+            case VISUALS -> 10;
             case HUD -> 7;
             case UTILITIES -> 4;
             case SETTINGS -> 0;
@@ -279,6 +310,7 @@ public class VortexScreen extends Screen {
                     case 6 -> Modules.enchantmentEffects = !Modules.enchantmentEffects;
                     case 7 -> Modules.hitBubbles = !Modules.hitBubbles;
                     case 8 -> Modules.trajectories = !Modules.trajectories;
+                    case 9 -> Modules.customHand = !Modules.customHand;
                 }
             }
             case UTILITIES -> {
@@ -309,7 +341,7 @@ public class VortexScreen extends Screen {
     public void render(DrawContext c, int mouseX, int mouseY, float delta) {
         layout();
 
-        if (!(editingTargetEsp || editingCrosshair || editingBlockOverlay || editingHudIndex >= 0))
+        if (!(editingTargetEsp || editingCrosshair || editingBlockOverlay || editingCustomHand || editingHudIndex >= 0))
             c.fill(0, 0, width, height, 0xA8000010);
         if (editingHudIndex >= 0) {
             c.fill(panelX, panelY, panelX + panelW, panelY + 150, PANEL);
@@ -326,6 +358,28 @@ public class VortexScreen extends Screen {
                 int sx = panelX + 170, sw = panelW - 205;
                 c.fill(sx, sy + 3, sx + sw, sy + 11, 0xFF393047);
                 int filled = (int)(sw * (vals[i] / 800.0));
+                c.fill(sx, sy + 3, sx + filled, sy + 11, PURPLE);
+                c.fill(sx + filled - 2, sy, sx + filled + 2, sy + 14, TEXT);
+            }
+            super.render(c, mouseX, mouseY, delta);
+            return;
+        }
+        if (editingCustomHand) {
+            c.fill(panelX, panelY, panelX + panelW, panelY + panelH, PANEL);
+            c.drawBorder(panelX, panelY, panelW, panelH, PURPLE);
+            c.drawTextWithShadow(textRenderer, "CUSTOM HAND SETTINGS", panelX + 18, panelY + 18, TEXT);
+            c.drawTextWithShadow(textRenderer, "RMB: back", panelX + panelW - 88, panelY + 18, PURPLE);
+            String[] labels = {"Offset X", "Offset Y", "Offset Z", "Scale %", "Rotation Z", "Angle X (degrees)"};
+            int[] values = {Modules.handOffsetX, Modules.handOffsetY, Modules.handOffsetZ, Modules.handScalePercent, Modules.handRotation, Modules.handAngle};
+            for (int i = 0; i < labels.length; i++) {
+                int sy = panelY + 78 + i * 34;
+                c.drawTextWithShadow(textRenderer, labels[i] + "  " + values[i], panelX + 18, sy + 2, TEXT);
+                int sx = panelX + 170, sw = panelW - 205;
+                c.fill(sx, sy + 3, sx + sw, sy + 11, 0xFF393047);
+                int min = i < 3 ? -50 : i == 3 ? 25 : i == 4 ? 0 : -180;
+                int max = i < 3 ? 50 : i == 3 ? 200 : i == 4 ? 360 : 180;
+                int normalized = Math.max(0, Math.min(100, (values[i] - min) * 100 / Math.max(1, max - min)));
+                int filled = sw * normalized / 100;
                 c.fill(sx, sy + 3, sx + filled, sy + 11, PURPLE);
                 c.fill(sx + filled - 2, sy, sx + filled + 2, sy + 14, TEXT);
             }
@@ -526,7 +580,8 @@ public class VortexScreen extends Screen {
                 case 5 -> new Feature("Trails", "Entity trail toggle", Modules.trails);
                 case 6 -> new Feature("Enchantment Effects", "Glint color settings planned", Modules.enchantmentEffects);
                 case 7 -> new Feature("Hit Bubbles", "Hit effect toggle", Modules.hitBubbles);
-                default -> new Feature("Trajectories", "Arrow / pearl / potion toggle", Modules.trajectories);
+                case 8 -> new Feature("Trajectories", "Arrow / pearl / potion toggle", Modules.trajectories);
+                default -> new Feature("Custom Hand", "Position, rotation and scale", Modules.customHand);
             };
             case UTILITIES -> switch (i) {
                 case 0 -> new Feature("Shield & Totem Counter", "Counts inventory items", Modules.shieldTotemCounter);
