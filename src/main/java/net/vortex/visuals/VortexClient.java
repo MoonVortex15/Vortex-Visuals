@@ -28,9 +28,6 @@ public class VortexClient implements ClientModInitializer {
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.world != null && Modules.timeChanger) {
-                client.world.setTimeOfDay(Modules.customTimeOfDay);
-            }
             while (openMenuKey.wasPressed()) {
                 if (client.currentScreen instanceof VortexScreen) {
                     client.setScreen(null);
