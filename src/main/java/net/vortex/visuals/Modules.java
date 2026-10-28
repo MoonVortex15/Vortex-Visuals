@@ -8,6 +8,12 @@ public class Modules {
     public static boolean hitSound = false;
     public static boolean deathSound = false;
     public static boolean targetEsp = false;
+    // Target ESP settings
+    public static int targetEspRed = 145;
+    public static int targetEspGreen = 60;
+    public static int targetEspBlue = 255;
+    public static int targetEspRange = 64;
+    public static int targetEspExpand = 4; // hundredths of a block
     public static boolean autoShift = false;
 
     // Визуалы
@@ -40,6 +46,16 @@ public class Modules {
     public static int crosshairGreen = 60;
     public static int crosshairBlue = 255;
     public static boolean crosshairCenterDot = true;
+    public static int crosshairAlpha = 255;
+    public static int crosshairLength = 5;
+    public static boolean crosshairDynamic = false;
+
+    // Per-widget HUD appearance (base controls, applied by HUD renderers where supported)
+    public static int hudFillAlpha = 150;
+    public static int hudTextRed = 245;
+    public static int hudTextGreen = 238;
+    public static int hudTextBlue = 255;
+    public static int hudScalePercent = 100;
 
     // HUD
     public static boolean watermarkEnabled = false;
