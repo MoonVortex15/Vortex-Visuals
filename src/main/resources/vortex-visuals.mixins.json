@@ -6,7 +6,8 @@
   "client": [
     "NoBlurMixin",
     "CustomCrosshairMixin",
-    "TimeChangerMixin"
+    "TimeChangerMixin",
+    "CustomHandMixin"
   ],
   "injectors": {
     "defaultRequire": 1
