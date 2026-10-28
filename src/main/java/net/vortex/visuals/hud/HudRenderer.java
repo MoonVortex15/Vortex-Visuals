@@ -44,10 +44,11 @@ public final class HudRenderer {
         int cy = screenHeight / 2;
         int thickness = Math.max(1, Math.min(8, Modules.crosshairThickness));
         int gap = Math.max(0, Math.min(20, Modules.crosshairGap));
-        int color = 0xFF000000 | (Math.max(0, Math.min(255, Modules.crosshairRed)) << 16)
+        int color = (Math.max(0, Math.min(255, Modules.crosshairAlpha)) << 24)
+                | (Math.max(0, Math.min(255, Modules.crosshairRed)) << 16)
                 | (Math.max(0, Math.min(255, Modules.crosshairGreen)) << 8)
                 | Math.max(0, Math.min(255, Modules.crosshairBlue));
-        int arm = 5;
+        int arm = Math.max(1, Math.min(20, Modules.crosshairLength));
         ctx.fill(cx - gap - arm, cy - thickness / 2, cx - gap, cy - thickness / 2 + thickness, color);
         ctx.fill(cx + gap, cy - thickness / 2, cx + gap + arm, cy - thickness / 2 + thickness, color);
         ctx.fill(cx - thickness / 2, cy - gap - arm, cx - thickness / 2 + thickness, cy - gap, color);
@@ -119,6 +120,19 @@ public final class HudRenderer {
         props.setProperty("blockOverlayAlpha", String.valueOf(Modules.blockOverlayAlpha));
         props.setProperty("blockOverlayLineWidth", String.valueOf(Modules.blockOverlayLineWidth));
 
+        // Persist every public primitive module setting so new settings survive restarts.
+        for (java.lang.reflect.Field field : Modules.class.getFields()) {
+            try {
+                if (java.lang.reflect.Modifier.isStatic(field.getModifiers())
+                        && (field.getType() == boolean.class || field.getType() == int.class
+                        || field.getType() == long.class || field.getType() == float.class
+                        || field.getType() == double.class)) {
+                    props.setProperty(field.getName(), String.valueOf(field.get(null)));
+                }
+            } catch (IllegalAccessException ignored) {
+            }
+        }
+
         try {
             Files.createDirectories(path.getParent());
             try (OutputStream out = Files.newOutputStream(path)) {
@@ -126,6 +140,33 @@ public final class HudRenderer {
             }
         } catch (IOException e) {
             System.err.println("[Vortex Visuals] Could not save config: " + e.getMessage());
+        }
+    }
+
+
+    /** Loads persisted module settings. Missing keys keep their Java defaults. */
+    public static void loadConfig() {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        Path path = mc.runDirectory.toPath().resolve("config").resolve("vortex-visuals-hud.properties");
+        if (!Files.isRegularFile(path)) return;
+        Properties props = new Properties();
+        try (var in = Files.newInputStream(path)) {
+            props.load(in);
+            for (java.lang.reflect.Field field : Modules.class.getFields()) {
+                if (!java.lang.reflect.Modifier.isStatic(field.getModifiers())) continue;
+                String value = props.getProperty(field.getName());
+                if (value == null) continue;
+                try {
+                    if (field.getType() == boolean.class) field.setBoolean(null, Boolean.parseBoolean(value));
+                    else if (field.getType() == int.class) field.setInt(null, Integer.parseInt(value));
+                    else if (field.getType() == long.class) field.setLong(null, Long.parseLong(value));
+                    else if (field.getType() == float.class) field.setFloat(null, Float.parseFloat(value));
+                    else if (field.getType() == double.class) field.setDouble(null, Double.parseDouble(value));
+                } catch (IllegalArgumentException | IllegalAccessException ignored) {
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("[Vortex Visuals] Could not load config: " + e.getMessage());
         }
     }
 
